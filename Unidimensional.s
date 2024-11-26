@@ -6,7 +6,11 @@
 
     action_id: .space 4
     file_ids: .space 1020
+
     storage: .space 1024
+    storage_size: .long 1024
+
+    ret_array: .space 1024
 
     format_input: .asciz "%d"
 
@@ -29,8 +33,10 @@ add:
 
     movl %eax, %ecx
 
+    movl ret_array, %esi
+
 add_loop:
-    cmpl $0, %ecx
+    cmp $0, %ecx
     je add_end
 
     pushl $file_id
@@ -49,7 +55,7 @@ add_loop:
     movl file_ids, %edi
     movl $1, (%edi, file_id, 4)
 
-    # Calc the blocks needed
+    # Calculate the blocks needed
     pushl %ecx
     movl file_dimension, %eax
     xorl %edx, %edx
@@ -66,12 +72,42 @@ add_ceil
     incl %eax
 
 add_skip_ceil:
-    movl %eax, %ecx
-
-    # Find a free blocks
+    # Find free blocks
     movl storage, %edi
-    
 
+    xorl %ecx, %ecx
+    movl %eax, %edx
+
+add_find_loop:
+    cmp $0, (%edi, %ecx, 4)
+    je add_find_continue
+    jne add_no_free_block
+
+add_find_continue:
+    incl %ecx
+    cmp %ecx, %edx
+    jne add_find_loop
+    
+add_no_free_block:
+    cmp storage_size, %edx
+    je add_this_ret_false
+
+    incl %ecx
+    icnl %edx
+    jmp add_find_loop
+
+add_this_ret_false:
+    # De completat:
+    # adauga in ret_array:
+    # 3n: id ul fisierului
+    # 3n+1: 0
+    # 3n+2: 0
+
+    jmp add_loop
+
+add_end:
+    popl %ebp
+    ret
 
 main:
     pushl $O
