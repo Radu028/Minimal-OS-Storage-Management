@@ -76,6 +76,8 @@ add_skip_ceil:
     # Find free blocks
     movl storage, %edi
 
+    pushl %ecx
+
     xorl %ecx, %ecx
     movl %eax, %edx
 
@@ -104,6 +106,7 @@ add_this_ret_false:
     # 3n+1: 0
     # 3n+2: 0
 
+    popl %ecx
     jmp add_loop
 
 add_end:
