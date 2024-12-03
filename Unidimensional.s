@@ -10,7 +10,7 @@
     storage: .space 1024
     storage_size: .long 1024
 
-    ret_array: .space 1024
+    returned_add_array: .space 1024
 
     format_input: .asciz "%d"
 
@@ -20,12 +20,14 @@ add:
     pushl %ebp
     movl %esp, %ebp
 
+    # Read how many files to add in N
     pushl $N
     pushl $format_input
     call scanf
     popl %ebx
     popl %ebx
 
+    # Calculate how many inputs are needed next. File id and file dimension for each file. 2N in total -> %ecx
     movl N, %eax
     xorl %edx, %edx
     movl $2, %ecx
@@ -33,25 +35,27 @@ add:
 
     movl %eax, %ecx
 
-    movl ret_array, %esi
+    movl returned_add_array, %esi
 
 add_loop:
     cmp $0, %ecx
     je add_end
 
+    # Read file id
     pushl $file_id
     pushl $format_input
     call scanf
     popl %ebx
     popl %ebx
 
+    # Read file dimension
     pushl $file_dimension
     pushl $format_input
     call scanf
     popl %ebx
     popl %ebx
 
-    # Calculate the blocks needed
+    # Calculate the blocks needed in %eax
     pushl %ecx
     movl file_dimension, %eax
     xorl %edx, %edx
@@ -59,6 +63,7 @@ add_loop:
     divl %ecx
     popl %ecx
     
+    # Ceil for %eax if it is the case, if not skip
     cmp $0, %edx
     jne add_ceil
 
