@@ -10,15 +10,20 @@
     storage: .space 1024
     storage_size: .long 1024
 
-    returned_add_array: .space 1024
+    add_returned_array: .space 1024
+    add_returned_array_index: .long 0
 
     format_input: .asciz "%d"
+
 
 .global main
 
 add:
     pushl %ebp
     movl %esp, %ebp
+
+    # Reset the returned array index
+    movl $0, add_returned_array_index
 
     # Read how many files to add in N
     pushl $N
@@ -35,7 +40,7 @@ add:
 
     movl %eax, %ecx
 
-    movl returned_add_array, %esi
+    movl add_returned_array, %esi
 
 add_loop:
     cmp $0, %ecx
@@ -81,7 +86,7 @@ add_skip_ceil:
     xorl %ecx, %ecx
     movl %eax, %edx
 
-add_find_loop:
+add_find_free_space_loop:
     cmp $0, (%edi, %ecx, 4)
     je add_find_continue
     jne add_no_free_block
@@ -89,24 +94,53 @@ add_find_loop:
 add_find_continue:
     incl %ecx
     cmp %ecx, %edx
-    jne add_find_loop
+    jne add_find_free_space_loop
+    je add_found_space_for_this_file
     
 add_no_free_block:
     cmp storage_size, %edx
-    je add_this_ret_false
+    # TODO: De verificat daca trebuie sa fie fix egal sau cu -1 
+    je add_no_space_for_this_file
 
     incl %ecx
     icnl %edx
-    jmp add_find_loop
+    jmp add_find_free_space_loop
 
-add_this_ret_false:
+add_no_space_for_this_file:
+    movl add_returned_array_index, %ecx
+
+    movl file_id, (%esi, %ecx, 4)
+    incl %ecx
+    movl $0, (%esi, %ecx, 4)
+    incl %ecx
+    movl $0, (%esi, %ecx, 4)
+
+    addl $3, add_returned_array_index
+
+    jmp add_repeat_loop
+
+add_found_space_for_this_file:
     # De completat:
-    # adauga in ret_array:
-    # 3n: id ul fisierului
-    # 3n+1: 0
-    # 3n+2: 0
+    # adauga in ret_array: (file_id, start, end) (a avut loc)
 
+    # Calculate again the start index in %eax
+    subl %eax, %ecx
+    movl %ecx, %eax
+
+    movl add_returned_array_index, %ecx
+
+    movl file_id, (%esi, %ecx, 4)
+    incl %ecx
+    movl %ecx, (%esi, %ecx, 4)
+    incl %ecx
+    movl %edx, (%esi, %ecx, 4)
+
+    addl $3, add_returned_array_index
+
+add_repeat_loop:
     popl %ecx
+    decl %ecx
+    
     jmp add_loop
 
 add_end:
@@ -142,4 +176,7 @@ et_add:
     pushl O
     call add
     popl %ebx
+
+    # De afisat add_returned_array: "file_id: (start, end)" -> "3n: (3n+1, 3n+2)"
+    # Pana la 3*N inclusiv
 
