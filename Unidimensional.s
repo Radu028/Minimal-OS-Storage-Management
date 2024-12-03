@@ -51,10 +51,6 @@ add_loop:
     popl %ebx
     popl %ebx
 
-    # Mark file id as used
-    movl file_ids, %edi
-    movl $1, (%edi, file_id, 4)
-
     # Calculate the blocks needed
     pushl %ecx
     movl file_dimension, %eax
