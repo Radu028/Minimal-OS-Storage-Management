@@ -129,7 +129,15 @@ add_found_space_for_this_file:
     incl %ecx
     movl %edx, (%esi, %ecx, 4)
     
-    # TODO: De completat si storage cu id ul fisierului pe dimensiunea fisierului
+    # Complete the storage array with the file id
+    movl %eax, %ecx
+
+    add_complete_storage_array_with_file_id:
+        movl file_id, (%edi, %ecx, 4)
+        incl %ecx
+        cmp %ecx, %edx
+    jge add_complete_storage_array_with_file_id
+
 
     addl $3, add_returned_array_index
 
