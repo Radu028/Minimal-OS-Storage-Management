@@ -3,9 +3,7 @@
     N: .space 4
     file_id: .space 4
     file_dimension: .space 4
-
     action_id: .space 4
-    file_ids: .space 1020
 
     storage: .space 1024
     storage_size: .long 1024
@@ -80,8 +78,6 @@ add_ceil
 
 add_skip_ceil:
     # Find free blocks
-    movl storage, %edi
-
     pushl %ecx
 
     xorl %ecx, %ecx
@@ -132,6 +128,8 @@ add_found_space_for_this_file:
     movl %ecx, (%esi, %ecx, 4)
     incl %ecx
     movl %edx, (%esi, %ecx, 4)
+    
+    # TODO: De completat si storage cu id ul fisierului pe dimensiunea fisierului
 
     addl $3, add_returned_array_index
 
@@ -145,7 +143,23 @@ add_end:
     popl %ebp
     ret
 
+get:
+    pushl %ebp
+    movl %esp, %ebp
+
+    movl 8(%ebp), %eax
+
+    movl 
+    
 main:
+    movl storage, %edi
+    xorl %ecx, %ecx
+
+    movl $0, (%edi, %ecx, 4)
+    incl %ecx
+    cmp storage_size, %ecx
+    jne main
+
     pushl $O
     pushl $format_input
     call scanf
@@ -203,7 +217,20 @@ et_print_add_loop:
     addl $3, %ecx
     cmp %eax, %ecx
     jne et_print_add_loop
+    je et_decl_O
 
+et_get:
+    pushl $file_id
+    pushl $format_input
+    call scanf
+    popl %ebx
+    popl %ebx
+
+    pushl file_id
+    call get
+    popl %ebx
+
+et_decl_O:
     decl O
     cmp $0, O
     je et_exit
