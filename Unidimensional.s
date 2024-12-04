@@ -152,6 +152,7 @@ main:
     popl %ebx
     popl %ebx
 
+et_do_action:
     pushl $action_id
     pushl $format_input
     call scanf
@@ -197,7 +198,23 @@ et_print_add_loop:
     popl %ebx
     popl %ebx
     popl %ebx
+    popl %ebx
 
     addl $3, %ecx
     cmp %eax, %ecx
     jne et_print_add_loop
+
+    decl O
+    movl O, %eax
+    cmp $0, %eax
+    je et_exit
+    jne et_do_action
+
+et_exit:
+    pushl $0
+    call fflush
+    popl %eax
+
+    movl $1, %eax
+    xorl %ebx, %ebx
+    int $0x80
