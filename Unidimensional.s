@@ -14,6 +14,7 @@
     add_returned_array_index: .long 0
 
     format_input: .asciz "%d"
+    format_add_output: .asciz "%d: (%d, %d)\n"
 
 
 .global main
@@ -120,9 +121,6 @@ add_no_space_for_this_file:
     jmp add_repeat_loop
 
 add_found_space_for_this_file:
-    # De completat:
-    # adauga in ret_array: (file_id, start, end) (a avut loc)
-
     # Calculate again the start index in %eax
     subl %eax, %ecx
     movl %ecx, %eax
@@ -177,6 +175,29 @@ et_add:
     call add
     popl %ebx
 
-    # De afisat add_returned_array: "file_id: (start, end)" -> "3n: (3n+1, 3n+2)"
-    # Pana la 3*N inclusiv
+    # %eax = 3N, %ecx = 0 => %ecx < 3N (3N - 3) Array index starts from 0
+    movl N, %eax
+    movl $3, %ecx
+    mull %ecx
 
+    xorl %ecx, %ecx
+
+et_print_add_loop:
+    movl %ecx, %ebx
+    addl $1, %ebx
+    movl %ecx, %edx
+    addl $2, %edx
+
+    pushl (%esi, %edx, 4)
+    pushl (%esi, %ebx, 4)
+    pushl (%esi, %ecx, 4)
+    pushl $format_add_output
+    movl 
+    call printf
+    popl %ebx
+    popl %ebx
+    popl %ebx
+
+    addl $3, %ecx
+    cmp %eax, %ecx
+    jne et_print_add_loop
