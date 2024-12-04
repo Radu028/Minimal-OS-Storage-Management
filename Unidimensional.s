@@ -207,6 +207,52 @@ delete_end:
     popl %ebp
     ret
 
+defragmentation:
+
+
+defrag_end:
+    popl %ebp
+    ret
+
+# Used for getting next file info: %eax = file id, %ecx = start index, %edx = end index
+# Input: %ecx = start index for searching
+search_for_file:
+    pushl %ebp
+    movl %esp, %ebp
+
+    movl 8(%ebp), %ecx
+
+    find_next_file_start_index:
+        cmp storage_size, %ecx
+        je et_decl_O
+
+        movl (%edi, %ecx, 4), %eax
+        incl %ecx
+        cmp $0, %eax
+        je find_next_file_start_index
+        jne end
+
+    end_search_start_index:
+        decl %ecx
+        # Push the start index
+        pushl %ecx
+        movl (%edi, %ecx, 4), %eax
+
+    find_file_end_index:
+        movl (%edi, %ecx, 4), %edx
+        incl %ecx
+        cmp $0, %edx
+        je end_search_end_index
+        jne find_file_end_index
+
+    end_search_end_index:
+        decl %ecx
+        movl %ecx, %edx
+
+    movl %eax, %ecx
+    popl %eax
+    
+
 main:
     movl storage, %edi
     xorl %ecx, %ecx
@@ -339,6 +385,9 @@ et_delete:
     popl %ebx
 
     jmp et_delete_find_next_file_start_index
+
+et_defrag:
+    call defragmentation
 
 et_decl_O:
     decl O
