@@ -208,6 +208,26 @@ delete_end:
     ret
 
 defragmentation:
+    pushl %ebp
+    movl %esp, %ebp
+
+    xorl %ecx, %ecx
+    xorl %edx, %edx
+
+    defrag_start:
+        cmp storage_size, %ecx
+        je defrag_end
+
+        movl (%edi, %ecx, 4), %eax
+        cmp $0, %eax
+        je defrag_continue
+
+        movl %eax, (%edi, %edx, 4)
+        incl %edx
+
+    defrag_continue:
+        incl %ecx
+        jmp defrag_start
 
 
 defrag_end:
@@ -224,7 +244,7 @@ search_for_file:
 
     find_next_file_start_index:
         cmp storage_size, %ecx
-        je et_decl_O
+        je search_for_file_null
 
         movl (%edi, %ecx, 4), %eax
         incl %ecx
@@ -251,7 +271,14 @@ search_for_file:
 
     movl %eax, %ecx
     popl %eax
+    jmp search_for_file_end
 
+search_for_file_null:
+    xorl %eax, %eax
+    xorl %ecx, %ecx
+    xorl %edx, %edx
+
+search_for_file_end:
     popl %ebp
     ret
     
@@ -349,12 +376,12 @@ et_delete:
     xorl %ecx, %ecx
 
     et_delete_find_next_file:
-        cmp storage_size, %ecx
-        je et_decl_O
-
         pushl %ecx
         call search_for_file
         popl %ebx
+
+        cmp $0, %eax
+        je et_decl_O
 
         # %eax = file id
         # %ecx = start index
