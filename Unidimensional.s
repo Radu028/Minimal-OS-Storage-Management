@@ -6,7 +6,7 @@
     action_id: .space 4
 
     storage: .space 1024
-    storage_size: .long 1024
+    storage_size: .long 1023
 
     add_returned_array: .space 1024
     add_returned_array_index: .long 0
@@ -14,6 +14,7 @@
     format_input: .asciz "%d"
     format_add_output: .asciz "%d: (%d, %d)\n"
     format_get_output: .asciz "(%d, %d)\n"
+    format_delete_output: .asciz "%d: (%d, %d)\n"
 
 
 .global main
@@ -97,11 +98,10 @@ add_find_continue:
     
 add_no_free_block:
     cmp storage_size, %edx
-    # TODO: De verificat daca trebuie sa fie fix egal sau cu -1 
     je add_no_space_for_this_file
 
     incl %ecx
-    icnl %edx
+    incl %edx
     jmp add_find_free_space_loop
 
 add_no_space_for_this_file:
@@ -188,6 +188,24 @@ get_end:
     popl %ebp
     ret
 
+delete:
+    pushl %ebp
+    movl %esp, %ebp
+
+    call get
+
+    # %eax = start index, %edx = end index
+    movl %eax, %ecx
+
+    delete_loop:
+        movl $0, (%edi, %ecx, 4)
+        incl %ecx
+        cmp %edx, %ecx
+        jne delete_loop
+
+delete_end:
+    popl %ebp
+    ret
 
 main:
     movl storage, %edi
@@ -235,32 +253,32 @@ et_add:
 
     xorl %ecx, %ecx
 
-et_print_add_loop:
-    movl %ecx, %ebx
-    addl $1, %ebx
-    movl %ecx, %edx
-    addl $2, %edx
+    et_print_add_loop:
+        movl %ecx, %ebx
+        addl $1, %ebx
+        movl %ecx, %edx
+        addl $2, %edx
 
-    pushl %ecx
-    pushl %eax
+        pushl %ecx
+        pushl %eax
 
-    pushl (%esi, %edx, 4)
-    pushl (%esi, %ebx, 4)
-    pushl (%esi, %ecx, 4)
-    pushl $format_add_output
-    call printf
-    popl %ebx
-    popl %ebx
-    popl %ebx
-    popl %ebx
+        pushl (%esi, %edx, 4)
+        pushl (%esi, %ebx, 4)
+        pushl (%esi, %ecx, 4)
+        pushl $format_add_output
+        call printf
+        popl %ebx
+        popl %ebx
+        popl %ebx
+        popl %ebx
 
-    popl %eax
-    popl %ecx
+        popl %eax
+        popl %ecx
 
-    addl $3, %ecx
-    cmp %eax, %ecx
-    jne et_print_add_loop
-    je et_decl_O
+        addl $3, %ecx
+        cmp %eax, %ecx
+        jne et_print_add_loop
+        je et_decl_O
 
 et_get:
     call get
@@ -275,6 +293,52 @@ et_get:
     popl %ebx
 
     jmp et_decl_O
+
+et_delete:
+    call delete
+
+    xorl %ecx, %ecx
+
+    et_delete_find_next_file_start_index:
+        cmp storage_size, %ecx
+        je et_decl_O
+
+        movl (%edi, %ecx, 4), %eax
+        incl %ecx
+        cmp $0, %eax
+        je et_delete_find_next_file_start_index
+        jne et_delete_end
+
+    et_delete_end_search_start_index:
+        decl %ecx
+        movl %ecx, %eax
+        movl (%edi, %ecx, 4), %ebx
+
+    et_delete_find_file_end_index:
+        movl (%edi, %ecx, 4), %edx
+        incl %ecx
+        cmp $0, %edx
+        je et_delete_end_search_end_index
+        jne et_delete_find_file_end_index
+
+    et_delete_end_search_end_index:
+        decl %ecx
+        movl %ecx, %edx
+
+    # %ebx = file id
+    # %eax = start index
+    # %edx = end index
+    pushl %edx
+    pushl %eax
+    pushl %ebx
+    pushl $format_delete_output
+    call printf
+    popl %ebx
+    popl %ebx
+    popl %ebx
+    popl %ebx
+
+    jmp et_delete_find_next_file_start_index
 
 et_decl_O:
     decl O
