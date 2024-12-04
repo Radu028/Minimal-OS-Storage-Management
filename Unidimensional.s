@@ -205,8 +205,7 @@ et_print_add_loop:
     jne et_print_add_loop
 
     decl O
-    movl O, %eax
-    cmp $0, %eax
+    cmp $0, O
     je et_exit
     jne et_do_action
 
