@@ -155,9 +155,27 @@ get:
     pushl %ebp
     movl %esp, %ebp
 
-    movl 8(%ebp), %eax
+    pushl $file_id
+    pushl $format_input
+    call scanf
+    popl %ebx
+    popl %ebx
 
-    movl 
+    xorl %ecx, %ecx
+
+get_search_start_index:
+    movl (%edi, %ecx, 4), %edx
+    incl %ecx
+    cmp file_id, %edx
+    jne get_search_start_index
+
+    # %eax = start index
+    movl %ecx, %eax
+    decl %eax
+
+    movl (%edi, %ecx, 4), %edx
+
+
     
 main:
     movl storage, %edi
@@ -228,15 +246,7 @@ et_print_add_loop:
     je et_decl_O
 
 et_get:
-    pushl $file_id
-    pushl $format_input
-    call scanf
-    popl %ebx
-    popl %ebx
-
-    pushl file_id
     call get
-    popl %ebx
 
 et_decl_O:
     decl O
