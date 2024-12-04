@@ -13,6 +13,7 @@
 
     format_input: .asciz "%d"
     format_add_output: .asciz "%d: (%d, %d)\n"
+    format_get_output: .asciz "(%d, %d)\n"
 
 
 .global main
@@ -163,20 +164,31 @@ get:
 
     xorl %ecx, %ecx
 
-get_search_start_index:
-    movl (%edi, %ecx, 4), %edx
-    incl %ecx
-    cmp file_id, %edx
-    jne get_search_start_index
+    get_search_start_index:
+        movl (%edi, %ecx, 4), %edx
+        incl %ecx
+        cmp file_id, %edx
+        jne get_search_start_index
 
     # %eax = start index
     movl %ecx, %eax
     decl %eax
 
-    movl (%edi, %ecx, 4), %edx
+    get_seach_end_index:
+        movl (%edi, %ecx, 4), %edx
+        incl %ecx
+        cmp file_id, %edx
+        je get_seach_end_index
+
+    # %edx = end index
+    decl %ecx
+    movl %ecx, %edx
+
+get_end:
+    popl %ebp
+    ret
 
 
-    
 main:
     movl storage, %edi
     xorl %ecx, %ecx
@@ -247,6 +259,15 @@ et_print_add_loop:
 
 et_get:
     call get
+
+    # %eax = start index, %edx = end index
+    pushl %edx
+    pushl %eax
+    pushl $format_get_output
+    call printf
+    popl %ebx
+    popl %ebx
+    popl %ebx
 
 et_decl_O:
     decl O
