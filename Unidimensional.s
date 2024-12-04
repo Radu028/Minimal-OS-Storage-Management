@@ -251,6 +251,9 @@ search_for_file:
 
     movl %eax, %ecx
     popl %eax
+
+    popl %ebp
+    ret
     
 
 main:
@@ -345,46 +348,29 @@ et_delete:
 
     xorl %ecx, %ecx
 
-    et_delete_find_next_file_start_index:
+    et_delete_find_next_file:
         cmp storage_size, %ecx
         je et_decl_O
 
-        movl (%edi, %ecx, 4), %eax
+        pushl %ecx
+        call search_for_file
+        popl %ebx
+
+        # %eax = file id
+        # %ecx = start index
+        # %edx = end index
+        pushl %edx
+        pushl %ecx
+        pushl %eax
+        pushl $format_delete_output
+        call printf
+        popl %ebx
+        popl %ebx
+        popl %ebx
+        popl %ebx
+
         incl %ecx
-        cmp $0, %eax
-        je et_delete_find_next_file_start_index
-        jne et_delete_end
-
-    et_delete_end_search_start_index:
-        decl %ecx
-        movl %ecx, %eax
-        movl (%edi, %ecx, 4), %ebx
-
-    et_delete_find_file_end_index:
-        movl (%edi, %ecx, 4), %edx
-        incl %ecx
-        cmp $0, %edx
-        je et_delete_end_search_end_index
-        jne et_delete_find_file_end_index
-
-    et_delete_end_search_end_index:
-        decl %ecx
-        movl %ecx, %edx
-
-    # %ebx = file id
-    # %eax = start index
-    # %edx = end index
-    pushl %edx
-    pushl %eax
-    pushl %ebx
-    pushl $format_delete_output
-    call printf
-    popl %ebx
-    popl %ebx
-    popl %ebx
-    popl %ebx
-
-    jmp et_delete_find_next_file_start_index
+    jmp et_delete_find_next_file
 
 et_defrag:
     call defragmentation
