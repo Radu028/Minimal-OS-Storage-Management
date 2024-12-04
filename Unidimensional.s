@@ -220,8 +220,8 @@ defragmentation:
 
     # TODO: Am nevoie de:
     # indexul unde se termina fisierul anterior (0 la start) - a
-    # indexul unde incepe fisierul urmator - b      /
-    # indexul unde se termina fisierul urmator - c / => lungimea fisierului (c - b + 1)
+    # indexul unde incepe fisierul urmator - b
+    # daca b - a > 1 => defragmentare (mutare fisierul care incepe la indexul b la indexul a + 1)
 
 
 
