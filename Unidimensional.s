@@ -216,12 +216,38 @@ defragmentation:
     pushl %ebp
     movl %esp, %ebp
 
-    xorl %ecx, %ecx
-
     # TODO: Am nevoie de:
     # indexul unde se termina fisierul anterior (0 la start) - a
     # indexul unde incepe fisierul urmator - b
     # daca b - a > 1 => defragmentare (mutare fisierul care incepe la indexul b la indexul a + 1)
+
+    xorl %ecx, %ecx
+
+    pushl %ecx
+    call search_for_file
+    popl %ebx
+
+    cmp $0, %eax
+    je defrag_end
+
+    # %eax = file id
+    # %ecx = start index
+    # %edx = end index
+    popl %edx
+    incl %ecx
+
+    pushl %ecx
+    call search_for_file
+    popl %ebx
+
+    # %edx = end index of first file, %ecx = start index of second file
+    popl %edx
+    movl %ecx, %eax
+    subl %edx, %eax
+
+    cmp $1, %eax
+    jg defrag_move_file
+
 
 
 
