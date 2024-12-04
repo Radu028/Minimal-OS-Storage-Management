@@ -118,9 +118,14 @@ add_no_space_for_this_file:
     jmp add_repeat_loop
 
 add_found_space_for_this_file:
+    # Verify also the current index if it is free
+    cmp $0, (%edi, %ecx, 4)
+    jne add_no_space_for_this_file
+
     # Calculate again the start index in %eax
     subl %eax, %ecx
     movl %ecx, %eax
+    incl %eax
 
     movl add_returned_array_index, %ecx
 
@@ -212,22 +217,12 @@ defragmentation:
     movl %esp, %ebp
 
     xorl %ecx, %ecx
-    xorl %edx, %edx
 
-    defrag_start:
-        cmp storage_size, %ecx
-        je defrag_end
+    # TODO: Am nevoie de:
+    # indexul unde se termina fisierul anterior (0 la start) - a
+    # indexul unde incepe fisierul urmator - b      /
+    # indexul unde se termina fisierul urmator - c / => lungimea fisierului (c - b + 1)
 
-        movl (%edi, %ecx, 4), %eax
-        cmp $0, %eax
-        je defrag_continue
-
-        movl %eax, (%edi, %edx, 4)
-        incl %edx
-
-    defrag_continue:
-        incl %ecx
-        jmp defrag_start
 
 
 defrag_end:
