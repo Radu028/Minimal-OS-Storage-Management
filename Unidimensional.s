@@ -241,16 +241,21 @@ et_print_add_loop:
     movl %ecx, %edx
     addl $2, %edx
 
+    pushl %ecx
+    pushl %eax
+
     pushl (%esi, %edx, 4)
     pushl (%esi, %ebx, 4)
     pushl (%esi, %ecx, 4)
     pushl $format_add_output
-    movl 
     call printf
     popl %ebx
     popl %ebx
     popl %ebx
     popl %ebx
+
+    popl %eax
+    popl %ecx
 
     addl $3, %ecx
     cmp %eax, %ecx
@@ -268,6 +273,8 @@ et_get:
     popl %ebx
     popl %ebx
     popl %ebx
+
+    jmp et_decl_O
 
 et_decl_O:
     decl O
