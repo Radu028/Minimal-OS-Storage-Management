@@ -12,7 +12,6 @@
     format_id_start_end_output: .asciz "%d: (%d, %d)\n"
     format_start_end_output: .asciz "(%d, %d)\n"
 
-
 .global main
 
 add:
@@ -302,7 +301,7 @@ print_storage_end:
     ret
 
 main:
-    movl storage, %edi
+    lea storage, %edi
     xorl %ecx, %ecx
 
     movl $0, (%edi, %ecx, 4)
