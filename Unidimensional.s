@@ -12,6 +12,8 @@
     add_returned_array_index: .long 0
 
     format_input: .asciz "%d"
+    format_id_start_end_output: .asciz "%d: (%d, %d)\n"
+    
     format_add_output: .asciz "%d: (%d, %d)\n"
     format_get_output: .asciz "(%d, %d)\n"
     format_delete_output: .asciz "%d: (%d, %d)\n"
@@ -304,6 +306,37 @@ find_next_file_end:
     popl %ebp
     ret
     
+print_storage:
+    xorl %ecx, %ecx
+
+    print_storage_loop:
+        pushl %ecx
+        call find_next_file
+        popl %ebx
+
+        cmp $0, %eax
+        je print_storage_end
+
+        # %eax = file id
+        # %ecx = start index
+        # %edx = end index
+        pushl %edx
+        pushl %ecx
+        pushl %eax
+        pushl $format_id_start_end_output
+        call printf
+        popl %ebx
+        popl %ebx
+        popl %ebx
+        popl %ebx
+
+        movl %edx, %ecx
+
+        incl %ecx
+    jmp et_delete_find_next_file
+
+print_storage_end:
+    ret
 
 main:
     movl storage, %edi
