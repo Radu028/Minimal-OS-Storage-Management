@@ -377,39 +377,9 @@ et_add:
     call add
     popl %ebx
 
-    # %eax = 3N, %ecx = 0 => %ecx < 3N (3N - 3) Array index starts from 0
-    movl N, %eax
-    movl $3, %ecx
-    mull %ecx
+    call print_storage
 
-    xorl %ecx, %ecx
-
-    et_print_add_loop:
-        movl %ecx, %ebx
-        addl $1, %ebx
-        movl %ecx, %edx
-        addl $2, %edx
-
-        pushl %ecx
-        pushl %eax
-
-        pushl (%esi, %edx, 4)
-        pushl (%esi, %ebx, 4)
-        pushl (%esi, %ecx, 4)
-        pushl $format_add_output
-        call printf
-        popl %ebx
-        popl %ebx
-        popl %ebx
-        popl %ebx
-
-        popl %eax
-        popl %ecx
-
-        addl $3, %ecx
-        cmp %eax, %ecx
-        jne et_print_add_loop
-        je et_decl_O
+    jmp et_decl_O
 
 et_get:
     call get
@@ -429,6 +399,8 @@ et_delete:
     call delete
 
     call print_storage
+
+    jmp et_decl_O
 
 et_defrag:
     call defragmentation
