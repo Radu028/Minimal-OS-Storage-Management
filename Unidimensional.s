@@ -10,10 +10,7 @@
 
     format_input: .asciz "%d"
     format_id_start_end_output: .asciz "%d: (%d, %d)\n"
-    
-    format_add_output: .asciz "%d: (%d, %d)\n"
-    format_get_output: .asciz "(%d, %d)\n"
-    format_delete_output: .asciz "%d: (%d, %d)\n"
+    format_start_end_output: .asciz "(%d, %d)\n"
 
 
 .global main
@@ -353,7 +350,7 @@ et_get:
     # %eax = start index, %edx = end index
     pushl %edx
     pushl %eax
-    pushl $format_get_output
+    pushl $format_start_end_output
     call printf
     popl %ebx
     popl %ebx
