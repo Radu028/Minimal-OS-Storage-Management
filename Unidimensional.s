@@ -233,7 +233,8 @@ defragmentation:
     # %eax = file id
     # %ecx = start index
     # %edx = end index
-    popl %edx
+    movl %edx, %ecx
+    push %edx
     incl %ecx
 
     pushl %ecx
@@ -416,6 +417,8 @@ et_delete:
         popl %ebx
         popl %ebx
         popl %ebx
+
+        movl %edx, %ecx
 
         incl %ecx
     jmp et_delete_find_next_file
