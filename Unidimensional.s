@@ -224,7 +224,7 @@ defragmentation:
     xorl %ecx, %ecx
 
     pushl %ecx
-    call search_for_file
+    call find_next_file
     popl %ebx
 
     cmp $0, %eax
@@ -237,7 +237,7 @@ defragmentation:
     incl %ecx
 
     pushl %ecx
-    call search_for_file
+    call find_next_file
     popl %ebx
 
     # %edx = end index of first file, %ecx = start index of second file
@@ -257,7 +257,7 @@ defrag_end:
 
 # Used for getting next file info: %eax = file id, %ecx = start index, %edx = end index
 # Input: %ecx = start index for searching
-search_for_file:
+find_next_file:
     pushl %ebp
     movl %esp, %ebp
 
@@ -265,7 +265,7 @@ search_for_file:
 
     find_next_file_start_index:
         cmp storage_size, %ecx
-        je search_for_file_null
+        je find_next_file_null
 
         movl (%edi, %ecx, 4), %eax
         incl %ecx
@@ -292,14 +292,14 @@ search_for_file:
 
     movl %eax, %ecx
     popl %eax
-    jmp search_for_file_end
+    jmp find_next_file_end
 
-search_for_file_null:
+find_next_file_null:
     xorl %eax, %eax
     xorl %ecx, %ecx
     xorl %edx, %edx
 
-search_for_file_end:
+find_next_file_end:
     popl %ebp
     ret
     
@@ -398,7 +398,7 @@ et_delete:
 
     et_delete_find_next_file:
         pushl %ecx
-        call search_for_file
+        call find_next_file
         popl %ebx
 
         cmp $0, %eax
