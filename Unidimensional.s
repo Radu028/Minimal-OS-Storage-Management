@@ -92,19 +92,18 @@ add_find_continue:
     
 add_no_free_block:
     cmp storage_size, %edx
-    je add_no_space_for_this_file
+    # No free space for this file
+    je add_repeat_loop
 
     incl %ecx
     incl %edx
     jmp add_find_free_space_loop
 
-add_no_space_for_this_file:
-    jmp add_repeat_loop
-
 add_found_space_for_this_file:
     # Verify also the current index if it is free
     cmp $0, (%edi, %ecx, 4)
-    jne add_no_space_for_this_file
+    # No free space for this file
+    jne add_repeat_loop
 
     # Calculate again the start index in %ecx
     subl %eax, %ecx
