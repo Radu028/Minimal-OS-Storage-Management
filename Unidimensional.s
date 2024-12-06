@@ -428,33 +428,7 @@ et_get:
 et_delete:
     call delete
 
-    xorl %ecx, %ecx
-
-    et_delete_find_next_file:
-        pushl %ecx
-        call find_next_file
-        popl %ebx
-
-        cmp $0, %eax
-        je et_decl_O
-
-        # %eax = file id
-        # %ecx = start index
-        # %edx = end index
-        pushl %edx
-        pushl %ecx
-        pushl %eax
-        pushl $format_delete_output
-        call printf
-        popl %ebx
-        popl %ebx
-        popl %ebx
-        popl %ebx
-
-        movl %edx, %ecx
-
-        incl %ecx
-    jmp et_delete_find_next_file
+    call print_storage
 
 et_defrag:
     call defragmentation
