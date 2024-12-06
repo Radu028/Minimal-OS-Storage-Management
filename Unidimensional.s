@@ -8,9 +8,6 @@
     storage: .space 1024
     storage_size: .long 1023
 
-    add_returned_array: .space 1024
-    add_returned_array_index: .long 0
-
     format_input: .asciz "%d"
     format_id_start_end_output: .asciz "%d: (%d, %d)\n"
     
@@ -24,9 +21,6 @@
 add:
     pushl %ebp
     movl %esp, %ebp
-
-    # Reset the returned array index
-    movl $0, add_returned_array_index
 
     # Read how many files to add in N
     pushl $N
@@ -42,8 +36,6 @@ add:
     mull %ecx
 
     movl %eax, %ecx
-
-    movl add_returned_array, %esi
 
 add_loop:
     cmp $0, %ecx
@@ -107,16 +99,6 @@ add_no_free_block:
     jmp add_find_free_space_loop
 
 add_no_space_for_this_file:
-    movl add_returned_array_index, %ecx
-
-    movl file_id, (%esi, %ecx, 4)
-    incl %ecx
-    movl $0, (%esi, %ecx, 4)
-    incl %ecx
-    movl $0, (%esi, %ecx, 4)
-
-    addl $3, add_returned_array_index
-
     jmp add_repeat_loop
 
 add_found_space_for_this_file:
@@ -124,30 +106,15 @@ add_found_space_for_this_file:
     cmp $0, (%edi, %ecx, 4)
     jne add_no_space_for_this_file
 
-    # Calculate again the start index in %eax
+    # Calculate again the start index in %ecx
     subl %eax, %ecx
-    movl %ecx, %eax
-    incl %eax
-
-    movl add_returned_array_index, %ecx
-
-    movl file_id, (%esi, %ecx, 4)
     incl %ecx
-    movl %ecx, (%esi, %ecx, 4)
-    incl %ecx
-    movl %edx, (%esi, %ecx, 4)
-    
-    # Complete the storage array with the file id
-    movl %eax, %ecx
 
     add_complete_storage_array_with_file_id:
         movl file_id, (%edi, %ecx, 4)
         incl %ecx
         cmp %ecx, %edx
     jge add_complete_storage_array_with_file_id
-
-
-    addl $3, add_returned_array_index
 
 add_repeat_loop:
     popl %ecx
