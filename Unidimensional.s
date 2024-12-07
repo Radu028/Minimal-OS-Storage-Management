@@ -197,9 +197,6 @@ delete_end:
     ret
 
 defragmentation:
-    pushl %ebp
-    movl %esp, %ebp
-
     # Logic:
     # Search for the end index of the first file (a)
     # Search for the start index of the second file (b)
@@ -272,7 +269,6 @@ defrag_move_file:
 
 
 defrag_end:
-    popl %ebp
     ret
 
 init_storage:
