@@ -83,7 +83,7 @@ add_skip_ceil:
 add_find_free_space_loop:
     pushl %eax
 
-    movl (%edi, %ecx, 4), %eax
+    movl (%edi, %ecx, 1), %eax
     cmp $0, %eax
     je add_find_continue
     jne add_no_free_block
@@ -112,7 +112,7 @@ add_found_space_for_this_file:
     # Verify also the current index if it is free
     pushl %eax
 
-    movl (%edi, %ecx, 4), %eax
+    movl (%edi, %ecx, 1), %eax
     cmp $0, %eax
     # No free space for this file
     jne add_repeat_loop
@@ -126,7 +126,7 @@ add_found_space_for_this_file:
     movl file_id, %eax
 
     add_complete_storage_array_with_file_id:
-        movl %eax, (%edi, %ecx, 4)
+        movb %al, (%edi, %ecx, 1)
         incl %ecx
         cmp %ecx, %edx
     jge add_complete_storage_array_with_file_id
@@ -154,7 +154,7 @@ get:
     xorl %ecx, %ecx
 
     get_search_start_index:
-        movl (%edi, %ecx, 4), %edx
+        movl (%edi, %ecx, 1), %edx
         incl %ecx
         cmp file_id, %edx
         jne get_search_start_index
@@ -164,7 +164,7 @@ get:
     decl %eax
 
     get_seach_end_index:
-        movl (%edi, %ecx, 4), %edx
+        movl (%edi, %ecx, 1), %edx
         incl %ecx
         cmp file_id, %edx
         je get_seach_end_index
@@ -187,7 +187,7 @@ delete:
     movl %eax, %ecx
 
     delete_loop:
-        movl $0, (%edi, %ecx, 4)
+        movl $0, (%edi, %ecx, 1)
         incl %ecx
         cmp %edx, %ecx
         jne delete_loop
@@ -250,7 +250,7 @@ defrag_move_file:
     movl file_id, %eax
 
     defrag_move_file_left_loop:
-        movl %eax, (%edi, %edx, 4)
+        movb %al, (%edi, %edx, 1)
         incl %edx
         cmp %ecx, %edx
         jne defrag_move_file_left_loop
@@ -263,7 +263,7 @@ defrag_move_file:
     addl $2, %ecx
 
     defrag_move_file_right_loop:
-        movl $0, (%edi, %ecx, 4)
+        movb $0, (%edi, %ecx, 1)
         incl %ecx
         cmp %edx, %ecx
         jne defrag_move_file_right_loop
@@ -284,10 +284,6 @@ init_storage:
     init_storage_loop:
         movb $0, (%edi, %ecx, 1)
 
-        pushl %ecx
-        call print_test_nr
-        popl %ebx
-
         incl %ecx
         cmp storage_size, %ecx
         jne init_storage_loop
@@ -307,7 +303,7 @@ find_next_file:
         cmp storage_size, %ecx
         je find_next_file_null
 
-        movl (%edi, %ecx, 4), %eax
+        movl (%edi, %ecx, 1), %eax
         incl %ecx
         cmp $0, %eax
         je find_next_file_start_index
@@ -317,10 +313,10 @@ find_next_file:
         decl %ecx
         # Push the start index
         pushl %ecx
-        movl (%edi, %ecx, 4), %eax
+        movl (%edi, %ecx, 1), %eax
 
     find_file_end_index:
-        movl (%edi, %ecx, 4), %edx
+        movl (%edi, %ecx, 1), %edx
         incl %ecx
         cmp $0, %edx
         je end_search_end_index
