@@ -65,7 +65,7 @@ add_loop:
 
     jmp add_skip_ceil
 
-add_ceil
+add_ceil:
     incl %eax
 
 add_skip_ceil:
@@ -76,17 +76,24 @@ add_skip_ceil:
     movl %eax, %edx
 
 add_find_free_space_loop:
-    cmp $0, (%edi, %ecx, 4)
+    pushl %eax
+
+    movl (%edi, %ecx, 4), %eax
+    cmp $0, %eax
     je add_find_continue
     jne add_no_free_block
 
 add_find_continue:
+    popl %eax
+
     incl %ecx
     cmp %ecx, %edx
     jne add_find_free_space_loop
     je add_found_space_for_this_file
     
 add_no_free_block:
+    popl %eax
+
     cmp storage_size, %edx
     # No free space for this file
     je add_repeat_loop
@@ -97,16 +104,23 @@ add_no_free_block:
 
 add_found_space_for_this_file:
     # Verify also the current index if it is free
-    cmp $0, (%edi, %ecx, 4)
+    pushl %eax
+
+    movl (%edi, %ecx, 4), %eax
+    cmp $0, %eax
     # No free space for this file
     jne add_repeat_loop
+
+    popl %eax
 
     # Calculate again the start index in %ecx
     subl %eax, %ecx
     incl %ecx
 
+    movl file_id, %eax
+
     add_complete_storage_array_with_file_id:
-        movl file_id, (%edi, %ecx, 4)
+        movl %eax, (%edi, %ecx, 4)
         incl %ecx
         cmp %ecx, %edx
     jge add_complete_storage_array_with_file_id
@@ -226,11 +240,16 @@ defrag_move_file:
     popl file_id
     incl %edx
 
+    pushl %eax
+    movl file_id, %eax
+
     defrag_move_file_left_loop:
-        movl file_id, (%edi, %edx, 4)
+        movl %eax, (%edi, %edx, 4)
         incl %edx
         cmp %ecx, %edx
         jne defrag_move_file_left_loop
+
+    popl %eax
 
     movl %ebx, %edx
     movl %edx, %ecx
@@ -325,7 +344,7 @@ print_storage:
         movl %edx, %ecx
 
         incl %ecx
-    jmp et_delete_find_next_file
+    jmp print_storage_loop
 
 print_storage_end:
     ret
@@ -352,16 +371,18 @@ et_do_action:
     popl %ebx
     popl %ebx
 
-    cmp $1, action_id
+    movl action_id, %eax
+
+    cmp $1, %eax
     je et_add
 
-    cmp $2, action_id
+    cmp $2, %eax
     je et_get
 
-    cmp $3, action_id
+    cmp $3, %eax
     je et_delete
 
-    cmp $4, action_id
+    cmp $4, %eax
     je et_defrag
 
 et_add:
@@ -403,7 +424,9 @@ et_defrag:
 
 et_decl_O:
     decl O
-    cmp $0, O
+    movl O, %eax
+
+    cmp $0, %eax
     je et_exit
     jne et_do_action
 
