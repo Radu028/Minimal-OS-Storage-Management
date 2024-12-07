@@ -429,8 +429,12 @@ et_get:
 et_delete:
     pushl $file_id
     pushl $format_input
-    call delete
+    call scanf
     popl %ebx
+    popl %ebx
+
+    pushl file_id
+    call delete
     popl %ebx
 
     call print_storage
