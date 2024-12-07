@@ -13,7 +13,7 @@
     format_start_end_output: .asciz "(%d, %d)\n"
 
     format_test: .asciz "Test\n"
-    format_test_nr: .asciz "%d\n"
+    format_test_nr: .asciz "Test %d\n"
 
 .text
 
@@ -30,13 +30,7 @@ add:
     popl %ebx
     popl %ebx
 
-    # Calculate how many inputs are needed next. File id and file dimension for each file. 2N in total -> %ecx
-    movl N, %eax
-    xorl %edx, %edx
-    movl $2, %ecx
-    mull %ecx
-
-    movl %eax, %ecx
+    movl N, %ecx
 
 add_loop:
     cmp $0, %ecx
@@ -49,11 +43,19 @@ add_loop:
     popl %ebx
     popl %ebx
 
+    pushl file_id
+    call print_test_nr
+    popl %ebx
+
     # Read file dimension
     pushl $file_dimension
     pushl $format_input
     call scanf
     popl %ebx
+    popl %ebx
+
+    pushl file_dimension
+    call print_test_nr
     popl %ebx
 
     # Calculate the blocks needed in %eax
@@ -66,29 +68,25 @@ add_loop:
     
     # Ceil for %eax if it is the case, if not skip
     cmp $0, %edx
-    jne add_ceil
+    je add_skip_ceil
 
-    jmp add_skip_ceil
-
-add_ceil:
     incl %eax
 
 add_skip_ceil:
     # Find free blocks
-    pushl %ecx
-
     xorl %ecx, %ecx
     movl %eax, %edx
+
+    # %edx = end index for the current file
+    decl %edx
 
 add_find_free_space_loop:
     pushl %eax
 
     movl (%edi, %ecx, 1), %eax
     cmp $0, %eax
-    je add_find_continue
     jne add_no_free_block
 
-add_find_continue:
     popl %eax
 
     incl %ecx
@@ -120,8 +118,8 @@ add_found_space_for_this_file:
     popl %eax
 
     # Calculate again the start index in %ecx
-    subl %eax, %ecx
     incl %ecx
+    subl %eax, %ecx
 
     movl file_id, %eax
 
@@ -132,8 +130,8 @@ add_found_space_for_this_file:
     jge add_complete_storage_array_with_file_id
 
 add_repeat_loop:
-    popl %ecx
-    decl %ecx
+    decl N
+    movl N, %ecx
     
     jmp add_loop
 
@@ -375,7 +373,11 @@ main:
     lea storage, %edi
     call init_storage
 
-    call print_test
+    pushl $O
+    pushl $format_input
+    call scanf
+    popl %ebx
+    popl %ebx
 
 et_do_action:
     pushl $action_id
@@ -399,9 +401,7 @@ et_do_action:
     je et_defrag
 
 et_add:
-    pushl O
     call add
-    popl %ebx
 
     call print_storage
 
