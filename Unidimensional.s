@@ -397,6 +397,10 @@ et_delete:
 et_defrag:
     call defragmentation
 
+    call print_storage
+
+    jmp et_decl_O
+
 et_decl_O:
     decl O
     cmp $0, O
