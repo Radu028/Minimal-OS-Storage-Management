@@ -215,15 +215,15 @@ defrag_loop:
     # %eax = file id
     # %ecx = start index
     # %edx = end index
-    pushl %eax
-
-    movl %edx, %ecx
     pushl %edx
+    movl %edx, %ecx
     incl %ecx
 
     pushl %ecx
     call find_next_file
     popl %ebx
+
+    movl %eax, file_id
 
     # %ebx = end index of second file
     movl %edx, %ebx
@@ -240,7 +240,6 @@ defrag_loop:
     jmp defrag_loop
 
 defrag_move_file:
-    popl file_id
     incl %edx
 
     pushl %eax
@@ -262,8 +261,8 @@ defrag_move_file:
     defrag_move_file_right_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
-        cmp %edx, %ecx
-        jne defrag_move_file_right_loop
+        cmp %ecx, %edx
+        jge defrag_move_file_right_loop
 
     jmp defrag_loop
 
