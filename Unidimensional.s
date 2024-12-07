@@ -311,8 +311,8 @@ find_next_file:
     find_file_end_index:
         movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp $0, %dl
-        jne find_file_end_index
+        cmp %al, %dl
+        je find_file_end_index
 
     end_search_end_index:
         subl $2, %ecx
