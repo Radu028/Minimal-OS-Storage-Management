@@ -180,10 +180,10 @@ defragmentation:
     pushl %ebp
     movl %esp, %ebp
 
-    # TODO: Am nevoie de:
-    # indexul unde se termina fisierul anterior (0 la start) - a
-    # indexul unde incepe fisierul urmator - b
-    # daca b - a > 1 => defragmentare (mutare fisierul care incepe la indexul b la indexul a + 1)
+    # Logic:
+    # Search for the end index of the first file (a)
+    # Search for the start index of the second file (b)
+    # If b - a > 1, move the begining of the second file to a + 1
 
     xorl %ecx, %ecx
 
