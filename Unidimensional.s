@@ -6,13 +6,14 @@
     action_id: .space 4
 
     storage: .space 1024
-    storage_size: .long 1023
+    storage_size: .long 1024
 
     format_input: .asciz "%d"
     format_id_start_end_output: .asciz "%d: (%d, %d)\n"
     format_start_end_output: .asciz "(%d, %d)\n"
 
     format_test: .asciz "Test\n"
+    format_test_nr: .asciz "%d\n"
 
 .text
 
@@ -98,12 +99,13 @@ add_find_continue:
 add_no_free_block:
     popl %eax
 
+    incl %ecx
+    incl %edx
+
     cmp storage_size, %edx
     # No free space for this file
     je add_repeat_loop
 
-    incl %ecx
-    incl %edx
     jmp add_find_free_space_loop
 
 add_found_space_for_this_file:
@@ -280,7 +282,12 @@ init_storage:
     xorl %ecx, %ecx
 
     init_storage_loop:
-        movl $0, (%edi, %ecx, 4)
+        movb $0, (%edi, %ecx, 1)
+
+        pushl %ecx
+        call print_test_nr
+        popl %ebx
+
         incl %ecx
         cmp storage_size, %ecx
         jne init_storage_loop
@@ -304,7 +311,7 @@ find_next_file:
         incl %ecx
         cmp $0, %eax
         je find_next_file_start_index
-        jne end
+        # jne end
 
     end_search_start_index:
         decl %ecx
@@ -371,6 +378,8 @@ print_storage_end:
 main:
     lea storage, %edi
     call init_storage
+
+    call print_test
 
 et_do_action:
     pushl $action_id
@@ -466,4 +475,29 @@ print_test:
     popl %ebx
     popl %eax
 
+    ret
+
+print_test_nr:
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+
+    movl 8(%ebp), %eax
+
+    pushl %eax
+    pushl $format_test_nr
+    call printf
+    popl %ebx
+    popl %ebx
+
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    popl %ebp
     ret
