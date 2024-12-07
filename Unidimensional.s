@@ -43,19 +43,11 @@ add_loop:
     popl %ebx
     popl %ebx
 
-    pushl file_id
-    call print_test_nr
-    popl %ebx
-
     # Read file dimension
     pushl $file_dimension
     pushl $format_input
     call scanf
     popl %ebx
-    popl %ebx
-
-    pushl file_dimension
-    call print_test_nr
     popl %ebx
 
     # Calculate the blocks needed in %eax
@@ -79,6 +71,10 @@ add_skip_ceil:
 
     # %edx = end index for the current file
     decl %edx
+
+    pushl %edx
+    call print_test_nr
+    popl %ebx
 
 add_find_free_space_loop:
     pushl %eax
@@ -140,18 +136,17 @@ add_end:
     ret
 
 get:
-    pushl $file_id
-    pushl $format_input
-    call scanf
-    popl %ebx
-    popl %ebx
     pushl %ebp
     movl %esp, %ebp
 
+    movl 8(%ebp), file_id
 
     xorl %ecx, %ecx
 
     get_search_start_index:
+        cmp storage_size, %ecx
+        je get_null
+
         movl (%edi, %ecx, 1), %edx
         incl %ecx
         cmp file_id, %edx
@@ -170,6 +165,12 @@ get:
     # %edx = end index
     decl %ecx
     movl %ecx, %edx
+
+    jmp get_end
+
+get_null:
+    xorl %eax, %eax
+    xorl %edx, %edx
 
 get_end:
     popl %ebp
@@ -408,7 +409,15 @@ et_add:
     jmp et_decl_O
 
 et_get:
+    pushl $file_id
+    pushl $format_input
+    call scanf
+    popl %ebx
+    popl %ebx
+
+    pushl file_id
     call get
+    popl %ebx
 
     # %eax = start index, %edx = end index
     pushl %edx
