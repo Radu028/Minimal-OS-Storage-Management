@@ -187,6 +187,7 @@ defragmentation:
 
     xorl %ecx, %ecx
 
+defrag_loop:
     pushl %ecx
     call find_next_file
     popl %ebx
@@ -197,23 +198,52 @@ defragmentation:
     # %eax = file id
     # %ecx = start index
     # %edx = end index
+    pushl %eax
+
     movl %edx, %ecx
-    push %edx
+    pushl %edx
     incl %ecx
 
     pushl %ecx
     call find_next_file
     popl %ebx
 
+    # %ebx = end index of second file
+    movl %edx, %ebx
+
     # %edx = end index of first file, %ecx = start index of second file
     popl %edx
     movl %ecx, %eax
     subl %edx, %eax
+    # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
 
     cmp $1, %eax
     jg defrag_move_file
+    
+    jmp defrag_loop
 
+defrag_move_file:
+    popl file_id
+    incl %edx
 
+    defrag_move_file_left_loop:
+        movl file_id, (%edi, %edx, 4)
+        incl %edx
+        cmp %ecx, %edx
+        jne defrag_move_file_left_loop
+
+    movl %ebx, %edx
+    movl %edx, %ecx
+    subl %eax, %ecx
+    addl $2, %ecx
+
+    defrag_move_file_right_loop:
+        movl $0, (%edi, %ecx, 4)
+        incl %ecx
+        cmp %edx, %ecx
+        jne defrag_move_file_right_loop
+
+    jmp defrag_loop
 
 
 defrag_end:
