@@ -139,7 +139,8 @@ get:
     pushl %ebp
     movl %esp, %ebp
 
-    movl 8(%ebp), file_id
+    movl 8(%ebp), %eax
+    movl %eax, file_id
 
     xorl %ecx, %ecx
 
