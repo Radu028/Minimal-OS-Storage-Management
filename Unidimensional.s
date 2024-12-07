@@ -12,6 +12,10 @@
     format_id_start_end_output: .asciz "%d: (%d, %d)\n"
     format_start_end_output: .asciz "(%d, %d)\n"
 
+    format_test: .asciz "Test\n"
+
+.text
+
 .global main
 
 add:
@@ -136,14 +140,14 @@ add_end:
     ret
 
 get:
-    pushl %ebp
-    movl %esp, %ebp
-
     pushl $file_id
     pushl $format_input
     call scanf
     popl %ebx
     popl %ebx
+    pushl %ebp
+    movl %esp, %ebp
+
 
     xorl %ecx, %ecx
 
@@ -269,6 +273,21 @@ defrag_end:
     popl %ebp
     ret
 
+init_storage:
+    pushl %ebp
+    movl %esp, %ebp
+
+    xorl %ecx, %ecx
+
+    init_storage_loop:
+        movl $0, (%edi, %ecx, 4)
+        incl %ecx
+        cmp storage_size, %ecx
+        jne init_storage_loop
+
+    popl %ebp
+    ret
+
 # Used for getting next file info: %eax = file id, %ecx = start index, %edx = end index
 # Input: %ecx = start index for searching
 find_next_file:
@@ -351,18 +370,7 @@ print_storage_end:
 
 main:
     lea storage, %edi
-    xorl %ecx, %ecx
-
-    movl $0, (%edi, %ecx, 4)
-    incl %ecx
-    cmp storage_size, %ecx
-    jne main
-
-    pushl $O
-    pushl $format_input
-    call scanf
-    popl %ebx
-    popl %ebx
+    call init_storage
 
 et_do_action:
     pushl $action_id
@@ -438,3 +446,24 @@ et_exit:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
+
+
+
+
+
+print_test:
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+
+    pushl $format_test
+    call printf
+    popl %ebx
+
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    ret
