@@ -144,9 +144,9 @@ get:
         cmp storage_size, %ecx
         je get_null
 
-        movl (%edi, %ecx, 1), %edx
+        movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp file_id, %edx
+        cmp file_id, %dl
         jne get_search_start_index
 
     # %eax = start index
@@ -154,13 +154,13 @@ get:
     decl %eax
 
     get_seach_end_index:
-        movl (%edi, %ecx, 1), %edx
+        movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp file_id, %edx
+        cmp file_id, %dl
         je get_seach_end_index
 
     # %edx = end index
-    decl %ecx
+    subl $2, %ecx
     movl %ecx, %edx
 
     jmp get_end
@@ -177,16 +177,20 @@ delete:
     pushl %ebp
     movl %esp, %ebp
 
+    movl 8(%ebp), %eax
+
+    pushl %eax
     call get
+    popl %ebx
 
     # %eax = start index, %edx = end index
     movl %eax, %ecx
 
     delete_loop:
-        movl $0, (%edi, %ecx, 1)
+        movb $0, (%edi, %ecx, 1)
         incl %ecx
-        cmp %edx, %ecx
-        jne delete_loop
+        cmp %ecx, %edx
+        jge delete_loop
 
 delete_end:
     popl %ebp
@@ -423,7 +427,11 @@ et_get:
     jmp et_decl_O
 
 et_delete:
+    pushl $file_id
+    pushl $format_input
     call delete
+    popl %ebx
+    popl %ebx
 
     call print_storage
 
