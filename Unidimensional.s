@@ -72,10 +72,6 @@ add_skip_ceil:
     # %edx = end index for the current file
     decl %edx
 
-    pushl %edx
-    call print_test_nr
-    popl %ebx
-
 add_find_free_space_loop:
     pushl %eax
 
@@ -303,31 +299,27 @@ find_next_file:
         cmp storage_size, %ecx
         je find_next_file_null
 
-        movl (%edi, %ecx, 1), %eax
+        movb (%edi, %ecx, 1), %al
         incl %ecx
-        cmp $0, %eax
+        cmp $0, %al
         je find_next_file_start_index
-        # jne end
 
     end_search_start_index:
-        decl %ecx
         # Push the start index
         pushl %ecx
-        movl (%edi, %ecx, 1), %eax
 
     find_file_end_index:
-        movl (%edi, %ecx, 1), %edx
+        movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp $0, %edx
-        je end_search_end_index
+        cmp $0, %dl
         jne find_file_end_index
 
     end_search_end_index:
-        decl %ecx
+        subl $2, %ecx
         movl %ecx, %edx
 
-    movl %eax, %ecx
-    popl %eax
+    popl %ecx
+    decl %ecx
     jmp find_next_file_end
 
 find_next_file_null:
@@ -359,12 +351,11 @@ print_storage:
         pushl $format_id_start_end_output
         call printf
         popl %ebx
-        popl %ebx
-        popl %ebx
-        popl %ebx
+        popl %eax
+        popl %ecx
+        popl %edx
 
         movl %edx, %ecx
-
         incl %ecx
     jmp print_storage_loop
 
