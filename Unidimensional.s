@@ -260,6 +260,7 @@ find_next_file:
     movl %esp, %ebp
 
     movl 8(%ebp), %ecx
+    xorl %eax, %eax
 
     find_next_file_start_index:
         cmp storage_size, %ecx
