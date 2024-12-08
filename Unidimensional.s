@@ -71,6 +71,8 @@ add_skip_ceil:
 
     # %edx = end index for the current file
     decl %edx
+    cmp storage_size, %edx
+    jge add_repeat_loop
 
 add_find_free_space_loop:
     pushl %eax
