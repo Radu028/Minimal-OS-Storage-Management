@@ -6,6 +6,8 @@
     action_id: .space 4
 
     storage: .space 1024
+    rows: .long 32
+    cols: .long 32
 
     format_input: .asciz "%d"
     format_id_start_end_output: .asciz "%d: (%d, %d)\n"
@@ -18,5 +20,30 @@
 
 .global main
 
+init_storage:
+    movl rows, %eax
+    mull cols
+    decl %eax
+    xorl %ecx, %ecx
+
+    init_storage_loop:
+        movb $0, (%edi, %ecx, 1)
+        incl %ecx
+        cmp %eax, %ecx
+        jle init_storage_loop
+
+    ret
+        
+
 main:
-    
+    lea storage, %edi
+    call init_storage
+
+    pushl $O
+    pushl $format_input
+    call scanf
+    popl %ebx
+    popl %ebx
+
+
+
