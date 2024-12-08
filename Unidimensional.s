@@ -54,7 +54,7 @@ add_find_free_space_loop:
     xorl %eax, %eax
     movb (%edi, %ecx, 1), %al
     cmp $0, %eax
-    jne add_no_free_block
+    jne add_no_free_block_pop
 
     popl %eax
 
@@ -83,7 +83,6 @@ add_no_free_block:
 
 add_found_space_for_this_file:
     # Calculate again the start index in %ecx
-    incl %ecx
     subl %eax, %ecx
 
     movl 8(%ebp), %eax
@@ -380,8 +379,8 @@ et_add:
         popl %ebx
         popl %ebx
 
-        pushl file_id
         pushl file_dimension
+        pushl file_id
         call add
         popl %ebx
         popl %ebx
