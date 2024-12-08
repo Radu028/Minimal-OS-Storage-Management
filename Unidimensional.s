@@ -75,7 +75,8 @@ add_skip_ceil:
 add_find_free_space_loop:
     pushl %eax
 
-    movl (%edi, %ecx, 1), %eax
+    xorl %eax, %eax
+    movb (%edi, %ecx, 1), %al
     cmp $0, %eax
     jne add_no_free_block
 
@@ -102,10 +103,11 @@ add_found_space_for_this_file:
     # Verify also the current index if it is free
     pushl %eax
 
-    movl (%edi, %ecx, 1), %eax
+    xorl %eax, %eax
+    movb (%edi, %ecx, 1), %al
     cmp $0, %eax
     # No free space for this file
-    jne add_repeat_loop
+    jne add_repeat_loop_pop
 
     popl %eax
 
@@ -121,6 +123,10 @@ add_found_space_for_this_file:
         cmp %ecx, %edx
     jge add_complete_storage_array_with_file_id
 
+    jmp add_repeat_loop
+
+add_repeat_loop_pop:
+    popl %eax
 add_repeat_loop:
     decl N
     movl N, %ecx
@@ -271,9 +277,6 @@ defrag_end:
     ret
 
 init_storage:
-    pushl %ebp
-    movl %esp, %ebp
-
     xorl %ecx, %ecx
 
     init_storage_loop:
@@ -283,7 +286,6 @@ init_storage:
         cmp storage_size, %ecx
         jne init_storage_loop
 
-    popl %ebp
     ret
 
 # Used for getting next file info: %eax = file id, %ecx = start index, %edx = end index
