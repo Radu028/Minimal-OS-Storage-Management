@@ -23,40 +23,14 @@ add:
     pushl %ebp
     movl %esp, %ebp
 
-    # Read how many files to add in N
-    pushl $N
-    pushl $format_input
-    call scanf
-    popl %ebx
-    popl %ebx
-
-    movl N, %ecx
-
-add_loop:
-    cmp $0, %ecx
-    je add_end
-
-    # Read file id
-    pushl $file_id
-    pushl $format_input
-    call scanf
-    popl %ebx
-    popl %ebx
-
-    # Read file dimension
-    pushl $file_dimension
-    pushl $format_input
-    call scanf
-    popl %ebx
-    popl %ebx
+    # File id = 8(%ebp)
+    # File dimension = 12(%ebp)
 
     # Calculate the blocks needed in %eax
-    pushl %ecx
-    movl file_dimension, %eax
+    movl 12(%ebp), %eax
     xorl %edx, %edx
     movl $8, %ecx
     divl %ecx
-    popl %ecx
     
     # Ceil for %eax if it is the case, if not skip
     cmp $0, %edx
@@ -72,7 +46,7 @@ add_skip_ceil:
     # %edx = end index for the current file
     decl %edx
     cmp storage_size, %edx
-    jge add_repeat_loop
+    jge add_end
 
 add_find_free_space_loop:
     pushl %eax
@@ -86,38 +60,33 @@ add_find_free_space_loop:
 
     incl %ecx
     cmp %ecx, %edx
-    jne add_find_free_space_loop
-    je add_found_space_for_this_file
+    jge add_find_free_space_loop
+
+    jmp add_found_space_for_this_file
+
+add_no_free_block_pop:
+    popl %eax
     
 add_no_free_block:
-    popl %eax
-
-    incl %ecx
     incl %edx
 
     cmp storage_size, %edx
     # No free space for this file
-    je add_repeat_loop
+    je add_end
+
+    # Recalculate the start index in %ecx
+    movl %edx, %ecx
+    incl %ecx
+    subl %eax, %ecx
 
     jmp add_find_free_space_loop
 
 add_found_space_for_this_file:
-    # Verify also the current index if it is free
-    pushl %eax
-
-    xorl %eax, %eax
-    movb (%edi, %ecx, 1), %al
-    cmp $0, %eax
-    # No free space for this file
-    jne add_repeat_loop_pop
-
-    popl %eax
-
     # Calculate again the start index in %ecx
     incl %ecx
     subl %eax, %ecx
 
-    movl file_id, %eax
+    movl 8(%ebp), %eax
 
     add_complete_storage_array_with_file_id:
         movb %al, (%edi, %ecx, 1)
@@ -125,15 +94,10 @@ add_found_space_for_this_file:
         cmp %ecx, %edx
     jge add_complete_storage_array_with_file_id
 
-    jmp add_repeat_loop
+    jmp add_end
 
-add_repeat_loop_pop:
+add_end_pop:
     popl %eax
-add_repeat_loop:
-    decl N
-    movl N, %ecx
-    
-    jmp add_loop
 
 add_end:
     popl %ebp
@@ -397,7 +361,37 @@ et_do_action:
     je et_defrag
 
 et_add:
-    call add
+    pushl $N
+    pushl $format_input
+    call scanf
+    popl %ebx
+    popl %ebx
+
+    et_add_loop:
+        pushl $file_id
+        pushl $format_input
+        call scanf
+        popl %ebx
+        popl %ebx
+
+        pushl $file_dimension
+        pushl $format_input
+        call scanf
+        popl %ebx
+        popl %ebx
+
+        pushl file_id
+        pushl file_dimension
+        call add
+        popl %ebx
+        popl %ebx
+
+        decl N
+        movl N, %ecx
+
+        cmp $0, %ecx
+        jne et_add_loop
+
 
     call print_storage
 
