@@ -360,6 +360,7 @@ delete:
 
     movl get_file_start_index, %ecx
 
+    # STIU SIGUR CA PRIMESC UN FISIER EXISTENT?
     delete_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
@@ -367,6 +368,21 @@ delete:
         jle delete_loop
 
     popl %ebp
+    ret
+
+defragmentation:
+    xorl %ecx, %ecx
+
+    defragmentation_loop:
+        cmp storage_size, %ecx
+        je defragmentation_end
+
+        movl (%edi, %ecx, 1), %eax
+        incl %ecx
+        cmp $0, %eax
+        je defragmentation_check_for_defragmentation
+
+defragmentation_end:
     ret
 
 main:
