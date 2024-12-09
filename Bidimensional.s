@@ -11,6 +11,9 @@
     find_file_col_start: .space 4
     find_file_col_end: .space 4
 
+    get_file_start_index: .space 4
+    get_file_end_index: .space 4
+
     add_blocks: .space 4
     add_row: .space 4
 
@@ -293,6 +296,9 @@ get:
     movl $0, find_file_col_start
     movl $0, find_file_col_end
 
+    movl $0, get_file_start_index
+    movl $0, get_file_end_index
+
     xorl %ecx, %ecx
     xorl %edx, %edx
 
@@ -310,6 +316,8 @@ get:
         pushl %ecx
         call calc_position
         popl %ecx
+
+        movl %eax, get_file_start_index
 
         movl %eax, find_file_row_start
         movl %edx, find_file_col_start
@@ -329,10 +337,35 @@ get:
         call calc_position
         popl %ecx
 
+        movl %ecx, find_file_end_index
+
         movl %eax, find_file_row_end
         movl %edx, find_file_col_end
 
 get_end:
+    popl %ebp
+    ret
+
+delete:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = file_id
+
+    movl 8(%ebp), %eax
+
+    pushl %eax
+    call get
+    popl %ebx
+
+    movl get_file_start_index, %ecx
+
+    delete_loop:
+        movb $0, (%edi, %ecx, 1)
+        incl %ecx
+        cmp get_file_end_index, %ecx
+        jle delete_loop
+
     popl %ebp
     ret
 
@@ -437,7 +470,7 @@ et_delete:
     popl %ebx
 
     pushl file_id
-    # call delete
+    call delete
     popl %ebx
 
     call print_storage
