@@ -15,6 +15,7 @@
     add_row: .space 4
 
     storage: .space 1024
+    storage_size: .long 1024
     rows: .long 32
     cols: .long 32
 
@@ -106,6 +107,7 @@ find_next_file:
     end_search_start_index:
         movl %eax, find_file_id
 
+        decl %ecx
         pushl %ecx
         call calc_position
         popl %ecx
@@ -354,7 +356,7 @@ et_get:
     popl %ebx
 
     pushl file_id
-    call get
+    # call get
     popl %ebx
 
     jmp et_decl_O
@@ -367,7 +369,7 @@ et_delete:
     popl %ebx
 
     pushl file_id
-    call delete
+    # call delete
     popl %ebx
 
     call print_storage
@@ -375,7 +377,7 @@ et_delete:
     jmp et_decl_O
 
 et_defrag:
-    call defragmentation
+    # call defragmentation
 
     call print_storage
 
@@ -398,3 +400,27 @@ et_exit:
     xorl %ebx, %ebx
     int $0x80
 
+test_print_nr:
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+
+    movl 8(%ebp), %eax
+    pushl %eax
+    pushl $format_test_nr
+    call printf
+    popl %ebx
+    popl %ebx
+
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    popl %ebp
+    ret
+    
