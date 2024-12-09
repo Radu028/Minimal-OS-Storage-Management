@@ -85,11 +85,14 @@ print_storage:
         popl %ebx
 
         # Calculate the next index
-        movl find_file_row_end, %eax
-        mull cols
-        addl find_file_col_end, %eax
-        incl %eax
+        pushl find_file_col_end
+        pushl find_file_row_end
+        call calc_index
+        popl %ebx
+        popl %ebx
+
         movl %eax, %ecx
+        incl %ecx
 
     jmp print_storage_loop
 
