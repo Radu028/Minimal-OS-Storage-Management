@@ -280,6 +280,62 @@ add_end:
     popl %ebp
     ret
 
+get:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = file_id
+
+    movl 8(%ebp), %eax
+
+    movl $0, find_file_row_start
+    movl $0, find_file_row_end
+    movl $0, find_file_col_start
+    movl $0, find_file_col_end
+
+    xorl %ecx, %ecx
+    xorl %edx, %edx
+
+    get_find_file_start_index:
+        cmp storage_size, %ecx
+        je get_end
+
+        movb (%edi, %ecx, 1), %dl
+        incl %ecx
+        cmp %al, %dl
+        jne get_find_file_start_index
+
+    get_end_search_start_index:
+        decl %ecx
+        pushl %ecx
+        call calc_position
+        popl %ecx
+
+        movl %eax, find_file_row_start
+        movl %edx, find_file_col_start
+
+        movl 8(%ebp), %eax
+        xorl %edx, %edx
+
+    get_find_file_end_index:
+        movb (%edi, %ecx, 1), %dl
+        incl %ecx
+        cmp %al, %dl
+        je get_find_file_end_index
+
+    get_end_search_end_index:
+        subl $2, %ecx
+        pushl %ecx
+        call calc_position
+        popl %ecx
+
+        movl %eax, find_file_row_end
+        movl %edx, find_file_col_end
+
+get_end:
+    popl %ebp
+    ret
+
 main:
     lea storage, %edi
     call init_storage
@@ -356,7 +412,19 @@ et_get:
     popl %ebx
 
     pushl file_id
-    # call get
+    call get
+    popl %ebx
+
+    pushl find_file_col_end
+    pushl find_file_row_end
+    pushl find_file_col_start
+    pushl find_file_row_start
+    pushl $format_start_end_output
+    call printf
+    popl %ebx
+    popl %ebx
+    popl %ebx
+    popl %ebx
     popl %ebx
 
     jmp et_decl_O
