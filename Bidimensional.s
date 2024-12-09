@@ -179,11 +179,13 @@ add_no_free_block_next_line_pop:
     jge add_end
 
     # Recalculate the end index in %edx
-    xorl %edx, %edx
-    movl add_row, %eax
-    mull cols
+    pushl add_blocks
+    pushl add_row
+    call calc_index
+    popl %ebx
+    popl %ebx
+
     movl %eax, %edx
-    addl add_blocks, %edx
     decl %edx
 
     jmp add_find_free_space_loop
