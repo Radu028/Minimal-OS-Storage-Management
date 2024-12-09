@@ -5,8 +5,14 @@
     file_dimension: .space 4
     action_id: .space 4
 
+    find_file_id: .space 4
+    find_file_row_start: .space 4
+    find_file_row_end: .space 4
+    find_file_col_start: .space 4
+    find_file_col_end: .space 4
+
     add_blocks: .space 4
-    add_line: .space 4
+    add_row: .space 4
 
     storage: .space 1024
     rows: .long 32
@@ -23,6 +29,21 @@
 
 .global main
 
+# %eax = index
+calc_index:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = row
+    # 12(%ebp) = col
+
+    movl 12(%ebp), %eax
+    mull cols
+    addl 8(%ebp), %eax
+
+    popl %ebp
+    ret
+
 init_storage:
     movl rows, %eax
     mull cols
@@ -35,6 +56,45 @@ init_storage:
         cmp %eax, %ecx
         jle init_storage_loop
 
+    ret
+
+print_storage:
+    xorl %ecx, %ecx
+
+    print_storage_loop:
+        pushl %ecx
+        call find_next_file
+        popl %ebx
+
+        movl find_file_id, %eax
+        cmp $0, %eax
+        je print_storage_end
+
+        pushl find_file_col_end
+        pushl find_file_row_end
+        pushl find_file_col_start
+        pushl find_file_row_start
+        pushl find_file_id
+        pushl $format_id_start_end_output
+        call printf
+        popl %ebx
+        popl %ebx
+        popl %ebx
+        popl %ebx
+        popl %ebx
+        popl %ebx
+
+        # Calculate the next index
+        movl find_file_row_end, %eax
+        mull cols
+        addl find_file_col_end, %eax
+        incl %eax
+        movl %eax, %ecx
+
+    jmp print_storage_loop
+
+
+print_storage_end:
     ret
 
 add:
@@ -50,7 +110,7 @@ add:
     movl $8, %ecx
     divl %ecx
 
-    movl $0, add_line
+    movl $0, add_row
     
     # Ceil for %eax if it is the case, if not skip
     cmp $0, %edx
@@ -105,14 +165,14 @@ add_no_free_block:
 add_no_free_block_next_line_pop:
     popl %edx
 
-    incl add_line
-    movl add_line, %edx
+    incl add_row
+    movl add_row, %edx
     cmp rows, %edx
     jge add_end
 
     # Recalculate the end index in %edx
     xorl %edx, %edx
-    movl add_line, %eax
+    movl add_row, %eax
     mull cols
     movl %eax, %edx
     addl add_blocks, %edx
