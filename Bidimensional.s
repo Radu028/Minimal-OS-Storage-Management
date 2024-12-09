@@ -40,11 +40,27 @@ calc_index:
     pushl %edx
     xorl %edx, %edx
 
-    movl 12(%ebp), %eax
+    movl 8(%ebp), %eax
     mull cols
-    addl 8(%ebp), %eax
+    addl 12(%ebp), %eax
 
     popl %edx
+
+    popl %ebp
+    ret
+
+# %eax = row (from 0 to rows - 1) and %edx = col (from 0 to cols - 1)
+calc_position:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = index
+
+    movl 8(%ebp), %eax
+    xorl %edx, %edx
+
+    movl cols, %ecx
+    divl %ecx
 
     popl %ebp
     ret
@@ -61,6 +77,61 @@ init_storage:
         cmp %eax, %ecx
         jle init_storage_loop
 
+    ret
+
+find_next_file:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = index
+
+    movl $0, find_file_id
+    movl $0, find_file_row_start
+    movl $0, find_file_row_end
+    movl $0, find_file_col_start
+    movl $0, find_file_col_end
+
+    xorl %eax, %eax
+    movl 8(%ebp), %ecx
+
+    find_next_file_start_index:
+        cmp storage_size, %ecx
+        je find_next_file_end
+
+        movb (%edi, %ecx, 1), %al
+        incl %ecx
+        cmp $0, %al
+        je find_next_file_start_index
+
+    end_search_start_index:
+        movl %eax, find_file_id
+
+        pushl %ecx
+        call calc_position
+        popl %ecx
+
+        movl %eax, find_file_row_start
+        movl %edx, find_file_col_start
+
+        xorl %eax, %eax
+
+    find_file_end_index:
+        movb (%edi, %ecx, 1), %al
+        incl %ecx
+        cmp find_file_id, %al
+        je find_file_end_index
+
+    end_search_end_index:
+        subl $2, %ecx
+        pushl %ecx
+        call calc_position
+        popl %ecx
+
+        movl %eax, find_file_row_end
+        movl %edx, find_file_col_end
+
+find_next_file_end:
+    popl %ebp
     ret
 
 print_storage:
