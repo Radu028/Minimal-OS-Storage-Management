@@ -5,6 +5,9 @@
     file_dimension: .space 4
     action_id: .space 4
 
+    add_blocks: .space 4
+    add_line: .space 4
+
     storage: .space 1024
     rows: .long 32
     cols: .long 32
@@ -33,7 +36,106 @@ init_storage:
         jle init_storage_loop
 
     ret
-        
+
+add:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # File id = 8(%ebp)
+    # File dimension = 12(%ebp)
+
+    # Calculate the blocks needed in %eax
+    movl 12(%ebp), %eax
+    xorl %edx, %edx
+    movl $8, %ecx
+    divl %ecx
+
+    movl $0, add_line
+    
+    # Ceil for %eax if it is the case, if not skip
+    cmp $0, %edx
+    je add_skip_ceil
+
+    incl %eax
+
+add_skip_ceil:
+    movl %eax, add_blocks
+
+    # Find free blocks
+    xorl %ecx, %ecx
+    movl %eax, %edx
+
+    # %edx = end index for the current file (for first line)
+    decl %edx
+    cmp storage_size, %edx
+    jge add_end
+
+add_find_free_space_loop:
+    xorl %eax, %eax
+    movb (%edi, %ecx, 1), %al
+    cmp $0, %eax
+    jne add_no_free_block
+
+    incl %ecx
+    cmp %ecx, %edx
+    jge add_find_free_space_loop
+
+    jmp add_found_space_for_this_file
+
+add_no_free_block:
+    incl %edx
+    movl %edx, %eax
+
+    pushl %edx
+    xorl %edx, %edx
+
+    movl cols, %ecx
+    divl %ecx
+
+    cmp $0, %edx
+    jne add_no_free_block_next_line_pop
+
+    popl %edx
+    # Recalculate the start index in %ecx
+    movl %edx, %ecx
+    incl %ecx
+    subl add_blocks, %ecx
+    jmp add_find_free_space_loop
+
+add_no_free_block_next_line_pop:
+    popl %edx
+
+    incl add_line
+    movl add_line, %edx
+    cmp rows, %edx
+    jge add_end
+
+    # Recalculate the end index in %edx
+    xorl %edx, %edx
+    movl add_line, %eax
+    mull cols
+    movl %eax, %edx
+    addl add_blocks, %edx
+    decl %edx
+
+    jmp add_find_free_space_loop
+
+add_found_space_for_this_file:
+    # Calculate again the start index in %ecx
+    subl add_blocks, %ecx
+
+    # Write the file in the storage
+    movl 8(%ebp), %eax
+
+    add_found_space_for_this_file_loop:
+        movb %al, (%edi, %ecx, 1)
+        incl %ecx
+        cmp %ecx, %edx
+        jge add_found_space_for_this_file_loop
+
+add_end:
+    popl %ebp
+    ret
 
 main:
     lea storage, %edi

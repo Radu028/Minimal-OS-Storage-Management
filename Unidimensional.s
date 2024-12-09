@@ -95,9 +95,6 @@ add_found_space_for_this_file:
 
     jmp add_end
 
-add_end_pop:
-    popl %eax
-
 add_end:
     popl %ebp
     ret
