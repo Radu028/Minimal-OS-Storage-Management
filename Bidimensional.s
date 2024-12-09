@@ -37,9 +37,14 @@ calc_index:
     # 8(%ebp) = row
     # 12(%ebp) = col
 
+    pushl %edx
+    xorl %edx, %edx
+
     movl 12(%ebp), %eax
     mull cols
     addl 8(%ebp), %eax
+
+    popl %edx
 
     popl %ebp
     ret
