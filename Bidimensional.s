@@ -383,6 +383,7 @@ defragmentation:
         cmp $0, %eax
         je defragmentation_end
 
+        pushl find_file_row_start
         pushl find_file_end_index
         movl find_file_end_index, %ecx
         incl %ecx
@@ -391,6 +392,10 @@ defragmentation:
         call find_next_file
         popl %ecx
 
+        movl find_file_id, %eax
+        cmp $0, %eax
+        je defragmentation_end
+        
         # %edx = end index of first file
         popl %edx
         movl find_file_start_index, %eax
@@ -398,9 +403,36 @@ defragmentation:
         subl %edx, %eax
         # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
 
+        # %ecx = row index of the first file
+        popl %ecx
+
         cmp $1, %eax
         je defragmentation_loop
 
+        # Check if the second file is on the same row and can be moved a few columns to the left
+        # OR
+        # Check if it is on the next row and can be moved to the current row
+        # OR
+        # Check if it is on the next row and cannot be moved to the current row, but can be moved a few columns to the left
+
+        cmp find_file_row_start, %ecx
+        je defragmentation_same_row
+        jl defragmentation_next_row
+
+    defragmentation_same_row:
+        # Move the second file to the left
+        incl %edx
+
+        pushl %eax
+        movl find_file_id, %eax
+
+        defragmentation_move_file_left_loop:
+            movb %al, (%edi, %ecx, 1)
+            incl %ecx
+            cmp %edx, %ecx
+            jge defragmentation_move_file_left_loop
+
+        jmp defragmentation_loop
 
 
 

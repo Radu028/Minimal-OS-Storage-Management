@@ -190,6 +190,8 @@ defrag_loop:
     call find_next_file
     popl %ebx
 
+    cmp $0, %eax
+    je defrag_end
     movl %eax, file_id
 
     # %ebx = end index of second file
