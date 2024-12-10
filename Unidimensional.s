@@ -215,6 +215,7 @@ defrag_move_file:
     pushl %eax
     movl file_id, %eax
 
+    # Fill the space between the two files with second file's id
     defrag_move_file_left_loop:
         movb %al, (%edi, %edx, 1)
         incl %edx
@@ -228,6 +229,7 @@ defrag_move_file:
     subl %eax, %ecx
     addl $2, %ecx
 
+    # Empty the space after the second file
     defrag_move_file_right_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx

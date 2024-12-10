@@ -427,6 +427,7 @@ defragmentation:
         pushl %eax
         movl find_file_id, %eax
 
+        # Fill the space between the two files with second file's id
         defragmentation_move_file_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
@@ -438,6 +439,7 @@ defragmentation:
         subl %eax, %ecx
         addl $2, %ecx
 
+        # Empty the space after the second file
         defragmentation_move_file_right_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
@@ -447,6 +449,7 @@ defragmentation:
         jmp defragmentation_loop
 
     defragmentation_next_row:
+
 
 
 defragmentation_end:
