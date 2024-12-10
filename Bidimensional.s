@@ -395,7 +395,7 @@ defragmentation:
         movl find_file_id, %eax
         cmp $0, %eax
         je defragmentation_end
-        
+
         # %edx = end index of first file
         popl %edx
         movl find_file_start_index, %eax
@@ -422,6 +422,7 @@ defragmentation:
     defragmentation_same_row:
         # Move the second file to the left
         incl %edx
+        movl %edx, %ecx
 
         pushl %eax
         movl find_file_id, %eax
@@ -429,11 +430,23 @@ defragmentation:
         defragmentation_move_file_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            cmp %edx, %ecx
-            jge defragmentation_move_file_left_loop
+            cmp find_file_start_index, %ecx
+            jne defragmentation_move_file_left_loop
+
+        popl %eax
+        movl find_file_end_index, %ecx
+        subl %eax, %ecx
+        addl $2, %ecx
+
+        defragmentation_move_file_right_loop:
+            movb $0, (%edi, %ecx, 1)
+            incl %ecx
+            cmp find_file_end_index, %ecx
+            jne defragmentation_move_file_right_loop
 
         jmp defragmentation_loop
 
+    defragmentation_next_row:
 
 
 defragmentation_end:
