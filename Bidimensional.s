@@ -394,7 +394,7 @@ defragmentation:
 
         movl find_file_id, %eax
         cmp $0, %eax
-        je defragmentation_end
+        je defragmentation_end_pop
 
         # %edx = end index of first file
         popl %edx
@@ -431,6 +431,7 @@ defragmentation:
         defragmentation_move_file_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
+            # TODO: Calculate the end index of the moved file
             cmp find_file_start_index, %ecx
             jne defragmentation_move_file_left_loop
 
@@ -444,13 +445,98 @@ defragmentation:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
             cmp find_file_end_index, %ecx
-            jne defragmentation_move_file_right_loop
+            jle defragmentation_move_file_right_loop
 
         jmp defragmentation_loop
 
     defragmentation_next_row:
+        # Calculate second file's size in %ecx
+        movl find_file_start_index, %eax
+        movl find_file_end_index, %ecx
+        subl %eax, %ecx
+        incl %ecx
 
+        pushl %edx
 
+        # Calculate the end column index of first file in %eax
+        # movl %edx, %eax
+        # incl %eax
+        # xorl %edx, %edx
+        # movl cols, %ecx
+        # divl %ecx
+
+        # Or use find_file_col_end
+        movl find_file_col_end, %eax
+        incl %eax
+        movl cols, %edx
+        subl %eax, %edx # %edx = number of columns free in the current row
+
+        popl %eax # %eax = end index of first file
+
+        cmp %ecx, %edx
+        jl defragmentation_next_row_check_next_row
+
+        # Move the second file to the current row
+        
+        movl %ecx, %edx # %edx = Second file's size
+        movl %eax, %ecx # %ecx = First file's end index
+        addl %eax, %edx # %edx = End index of the second file (new position)
+
+        movl %eax, %edx
+        movl find_file_id, %eax
+
+        defragmentation_next_row_move_file_to_current_row_loop:
+            movb %al, (%edi, %ecx, 1)
+            incl %ecx
+            cmp %ecx, %edx
+            jge defragmentation_next_row_move_file_to_current_row_loop
+
+        movl find_file_start_index, %ecx
+        movl find_file_end_index, %edx
+
+        defragmentation_next_row_empty_space_after_second_file_loop:
+            movb $0, (%edi, %ecx, 1)
+            incl %ecx
+            cmp %ecx, %edx
+            jge defragmentation_next_row_empty_space_after_second_file_loop
+
+        jmp defragmentation_loop
+
+    defragmentation_next_row_check_next_row:
+        movl find_file_col_start, %eax
+
+        cmp $0, %eax
+        je defragmentation_loop_continue
+
+        movl find_file_row_start, %eax
+        movl cols, %ecx
+        mull %ecx
+        movl %edx, %ecx
+
+        movl find_file_id, %eax
+
+        defragmentation_next_row_check_next_row_left_loop:
+            movb %al, (%edi, %ecx, 1)
+            incl %ecx
+            cmp find_file_start_index, %ecx
+            jne defragmentation_next_row_check_next_row_left_loop
+
+        movl find_file_col_end, %ecx
+        subl find_file_col_start, %ecx
+        addl $2, %ecx
+
+    defragmentation_loop_continue:
+        movl find_file_end_index, %ecx
+        incl %ecx
+
+        jmp defragmentation_loop
+
+        
+        
+defragmentation_end_pop:
+    # Free the stack from the first file's indexes
+    popl %eax
+    popl %eax
 
 defragmentation_end:
     ret
