@@ -210,15 +210,20 @@ defrag_loop:
     je defrag_loop
     
 defrag_move_file:
-    incl %edx
+    # Interchange %ecx and %edx
+    xorl %ecx, %edx
+    xorl %edx, %ecx
+    xorl %ecx, %edx
+
+    incl %ecx
 
     pushl %eax
     movl file_id, %eax
 
     # Fill the space between the two files with second file's id
     defrag_move_file_left_loop:
-        movb %al, (%edi, %edx, 1)
-        incl %edx
+        movb %al, (%edi, %ecx, 1)
+        incl %ecx
         cmp %ecx, %edx
         jne defrag_move_file_left_loop
 
