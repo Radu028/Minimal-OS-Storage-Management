@@ -204,8 +204,6 @@ defrag_loop:
     cmp $1, %eax
     je defrag_loop
     
-    jmp defrag_move_file
-
 defrag_move_file:
     incl %edx
 
