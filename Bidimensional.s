@@ -383,8 +383,23 @@ defragmentation:
         cmp $0, %eax
         je defragmentation_end
 
-        movl find_file_start_index, %ecx
         pushl find_file_end_index
+        movl find_file_end_index, %ecx
+        incl %ecx
+
+        pushl %ecx
+        call find_next_file
+        popl %ecx
+
+        # %edx = end index of first file
+        popl %edx
+        movl find_file_start_index, %eax
+        decl %eax
+        subl %edx, %eax
+        # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
+
+        cmp $1, %eax
+        je defragmentation_loop
 
 
 

@@ -202,9 +202,9 @@ defrag_loop:
     # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
 
     cmp $1, %eax
-    jg defrag_move_file
+    je defrag_loop
     
-    jmp defrag_loop
+    jmp defrag_move_file
 
 defrag_move_file:
     incl %edx
