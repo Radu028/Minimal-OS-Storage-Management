@@ -10,9 +10,8 @@
     find_file_row_end: .space 4
     find_file_col_start: .space 4
     find_file_col_end: .space 4
-
-    get_file_start_index: .space 4
-    get_file_end_index: .space 4
+    find_file_start_index: .space 4
+    find_file_end_index: .space 4
 
     add_blocks: .space 4
     add_row: .space 4
@@ -115,6 +114,7 @@ find_next_file:
         call calc_position
         popl %ecx
 
+        movl %ecx, find_file_start_index
         movl %eax, find_file_row_start
         movl %edx, find_file_col_start
 
@@ -132,6 +132,7 @@ find_next_file:
         call calc_position
         popl %ecx
 
+        movl %ecx, find_file_end_index
         movl %eax, find_file_row_end
         movl %edx, find_file_col_end
 
@@ -296,8 +297,8 @@ get:
     movl $0, find_file_col_start
     movl $0, find_file_col_end
 
-    movl $0, get_file_start_index
-    movl $0, get_file_end_index
+    movl $0, find_file_start_index
+    movl $0, find_file_end_index
 
     xorl %ecx, %ecx
     xorl %edx, %edx
@@ -317,7 +318,7 @@ get:
         call calc_position
         popl %ecx
 
-        movl %ecx, get_file_start_index
+        movl %ecx, find_file_start_index
 
         movl %eax, find_file_row_start
         movl %edx, find_file_col_start
@@ -337,7 +338,7 @@ get:
         call calc_position
         popl %ecx
 
-        movl %ecx, get_file_end_index
+        movl %ecx, find_file_end_index
 
         movl %eax, find_file_row_end
         movl %edx, find_file_col_end
@@ -358,32 +359,38 @@ delete:
     call get
     popl %ebx
 
-    movl get_file_start_index, %ecx
+    movl find_file_start_index, %ecx
 
     # STIU SIGUR CA PRIMESC UN FISIER EXISTENT?
     delete_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
-        cmp get_file_end_index, %ecx
+        cmp find_file_end_index, %ecx
         jle delete_loop
 
     popl %ebp
     ret
 
-# defragmentation:
-#     xorl %ecx, %ecx
+defragmentation:
+    xorl %ecx, %ecx
 
-#     defragmentation_loop:
-#         cmp storage_size, %ecx
-#         je defragmentation_end
+    defragmentation_loop:
+        pushl %ecx
+        call find_next_file
+        popl %ecx
 
-#         movl (%edi, %ecx, 1), %eax
-#         incl %ecx
-#         cmp $0, %eax
-#         je defragmentation_check_for_defragmentation
+        movl find_file_id, %eax
+        cmp $0, %eax
+        je defragmentation_end
 
-# defragmentation_end:
-#     ret
+        movl find_file_start_index, %ecx
+        pushl find_file_end_index
+
+
+
+
+defragmentation_end:
+    ret
 
 main:
     lea storage, %edi

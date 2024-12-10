@@ -184,10 +184,9 @@ defrag_loop:
     # %ecx = start index
     # %edx = end index
     pushl %edx
-    movl %edx, %ecx
-    incl %ecx
+    incl %edx
 
-    pushl %ecx
+    pushl %edx
     call find_next_file
     popl %ebx
 
