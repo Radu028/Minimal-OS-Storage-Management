@@ -214,10 +214,10 @@ add_skip_ceil:
     cmp storage_size, %edx
     jge add_end
 
-add_find_free_space_loop:
     xorl %eax, %eax
+add_find_free_space_loop:
     movb (%edi, %ecx, 1), %al
-    cmp $0, %eax
+    cmp $0, %al
     jne add_no_free_block
 
     incl %ecx
@@ -237,7 +237,7 @@ add_no_free_block:
     divl %ecx
 
     cmp $0, %edx
-    jne add_no_free_block_next_line_pop
+    je add_no_free_block_next_line_pop
 
     popl %edx
     # Recalculate the start index in %ecx
@@ -317,7 +317,7 @@ get:
         call calc_position
         popl %ecx
 
-        movl %eax, get_file_start_index
+        movl %ecx, get_file_start_index
 
         movl %eax, find_file_row_start
         movl %edx, find_file_col_start
@@ -337,7 +337,7 @@ get:
         call calc_position
         popl %ecx
 
-        movl %ecx, find_file_end_index
+        movl %ecx, get_file_end_index
 
         movl %eax, find_file_row_end
         movl %edx, find_file_col_end
@@ -370,20 +370,20 @@ delete:
     popl %ebp
     ret
 
-defragmentation:
-    xorl %ecx, %ecx
+# defragmentation:
+#     xorl %ecx, %ecx
 
-    defragmentation_loop:
-        cmp storage_size, %ecx
-        je defragmentation_end
+#     defragmentation_loop:
+#         cmp storage_size, %ecx
+#         je defragmentation_end
 
-        movl (%edi, %ecx, 1), %eax
-        incl %ecx
-        cmp $0, %eax
-        je defragmentation_check_for_defragmentation
+#         movl (%edi, %ecx, 1), %eax
+#         incl %ecx
+#         cmp $0, %eax
+#         je defragmentation_check_for_defragmentation
 
-defragmentation_end:
-    ret
+# defragmentation_end:
+#     ret
 
 main:
     lea storage, %edi
@@ -516,6 +516,22 @@ et_exit:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
+
+test_print:
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+
+    pushl $format_test
+    call printf
+
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    ret
 
 test_print_nr:
     pushl %ebp
