@@ -177,6 +177,7 @@ defrag_loop:
     call find_next_file
     popl %ebx
 
+    # If there is no first file, end the defragmentation
     cmp $0, %eax
     je defrag_end
 
@@ -190,8 +191,10 @@ defrag_loop:
     call find_next_file
     popl %ebx
 
+    # If there is no second file, end the defragmentation with a pop
     cmp $0, %eax
-    je defrag_end
+    je defrag_end_pop
+
     movl %eax, file_id
 
     # %ebx = end index of second file
@@ -221,7 +224,7 @@ defrag_move_file:
     popl %eax
 
     movl %ebx, %edx
-    movl %edx, %ecx
+    movl %ebx, %ecx
     subl %eax, %ecx
     addl $2, %ecx
 
@@ -233,6 +236,8 @@ defrag_move_file:
 
     jmp defrag_loop
 
+defrag_end_pop:
+    popl %ebx
 
 defrag_end:
     ret
