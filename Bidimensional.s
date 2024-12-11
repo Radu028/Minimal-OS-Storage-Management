@@ -610,15 +610,53 @@ concrete:
         lea 8(%ebp), %eax
         addl %edx, %eax # %eax = path + name
 
+        movl %eax, %ebx # For syscall stat
+
+        concrete_generate_file_id:
+            pushl %esi
+            movl %edx, %esi
+            xorl %eax, %eax
+            xorl %edx, %edx
+
+        concrete_generate_file_id_loop:
+            movb (%esi), %dl
+            cmp $0, %dl
+            je concrete_generate_file_id_end
+
+            addl %edx, %eax
+
+            incl %esi
+            jmp concrete_generate_file_id_loop
+
+        concrete_generate_file_id_end:
+            xorl %edx, %edx
+            movl $255, %esi
+            divl %esi
+            popl %esi
+            incl %eax
+
+        pushl %eax
+
+
         # Syscall stat
-        movl %eax, %ebx
         movl $106, %eax
         lea concrete_stat_buffer, %ecx
         int $0x80
         cmp $0, %eax
         jl concrete_end
 
-        movl 8(%ecx), %edx # %edx = st_size (file size)
+        popl %eax
+
+        pushl %edi
+        lea storage, %edi
+
+        pushl 8(%ecx) # st_size (file size)
+        pushl %eax # file_id
+        call add
+        popl %eax
+        popl %eax
+
+        popl %edi
 
         addl %ecx, %ebx
         cmp %ebx, %esi
