@@ -120,11 +120,11 @@ find_next_file:
 
         xorl %eax, %eax
 
-    find_file_end_index:
+    find_file_end_index_tag:
         movb (%edi, %ecx, 1), %al
         incl %ecx
         cmp find_file_id, %al
-        je find_file_end_index
+        je find_file_end_index_tag
 
     end_search_end_index:
         subl $2, %ecx
@@ -204,6 +204,9 @@ add:
     incl %eax
 
 add_skip_ceil:
+    cmp cols, %eax
+    jg add_end
+
     movl %eax, add_blocks
 
     # Find free blocks
@@ -550,8 +553,6 @@ defragmentation:
         incl %ecx
 
         jmp defragmentation_loop
-
-        
         
 defragmentation_end_pop:
     # Free the stack from the first file's indexes
@@ -670,7 +671,7 @@ et_delete:
     jmp et_decl_O
 
 et_defrag:
-    # call defragmentation
+    call defragmentation
 
     call print_storage
 
