@@ -514,25 +514,39 @@ defragmentation:
         cmp $0, %eax
         je defragmentation_loop_continue
 
+        xorl %edx, %edx
         movl find_file_row_start, %eax
         movl cols, %ecx
-        mull %ecx
-        movl %edx, %ecx
+        mull %ecx # %eax = start index of the current row
 
+        movl find_file_end_index, %edx
+        subl find_file_start_index, %edx
+        addl %eax, %edx # %edx = end index of the second file's new position
+
+        movl %eax, %ecx
         movl find_file_id, %eax
+        pushl %ecx
 
         defragmentation_next_row_check_next_row_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            cmp find_file_start_index, %ecx
-            jne defragmentation_next_row_check_next_row_left_loop
+            cmp %ecx, %edx
+            jge defragmentation_next_row_check_next_row_left_loop
 
-        movl find_file_col_end, %ecx
-        subl find_file_col_start, %ecx
-        addl $2, %ecx
+        movl find_file_start_index, %ecx
+        movl find_file_end_index, %edx
+
+        defragmentation_next_row_check_next_row_empty_space_after_second_file_loop:
+            movb $0, (%edi, %ecx, 1)
+            incl %ecx
+            cmp %ecx, %edx
+            jge defragmentation_next_row_check_next_row_empty_space_after_second_file_loop
+
+        popl %ecx
+        jmp defragmentation_loop
 
     defragmentation_loop_continue:
-        movl find_file_end_index, %ecx
+        movl %edx, %ecx
         incl %ecx
 
         jmp defragmentation_loop
