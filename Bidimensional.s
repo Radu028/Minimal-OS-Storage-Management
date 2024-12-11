@@ -484,10 +484,11 @@ defragmentation:
         
         movl %ecx, %edx # %edx = Second file's size
         movl %eax, %ecx # %ecx = First file's end index
-        addl %eax, %edx # %edx = End index of the second file (new position)
+        addl %eax, %edx # %edx = End index of the second file's new position
 
-        movl %eax, %edx
         movl find_file_id, %eax
+        incl %ecx
+        pushl %ecx
 
         defragmentation_next_row_move_file_to_current_row_loop:
             movb %al, (%edi, %ecx, 1)
@@ -504,6 +505,7 @@ defragmentation:
             cmp %ecx, %edx
             jge defragmentation_next_row_empty_space_after_second_file_loop
 
+        popl %ecx
         jmp defragmentation_loop
 
     defragmentation_next_row_check_next_row:
