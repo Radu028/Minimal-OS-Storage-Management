@@ -17,6 +17,8 @@
     add_row: .space 4
 
     concrete_path: .space 256
+    concrete_buffer: .space 1024
+    concrete_start_buffer: .space 256
 
     storage: .space 1048576
     storage_size: .long 1048576
@@ -575,7 +577,34 @@ concrete:
 
     # 8(%ebp) = path
 
-    movl 8(%ebp), %eax
+    concrete_open_dir:
+        # Syscall open
+        movl $5, %eax
+        lea 8(%ebp), %ebx
+        xorl %ecx, %ecx
+        int $0x80
+        cmp $0, %eax
+        jl concrete_end
+
+        movl %eax, %edi
+
+    concrete_read_dir:
+        # Syscall getdents
+        movl $141, %eax
+        movl %edi, %ebx
+        lea concrete_buffer, %ecx
+        movl $1024, %edx
+        int $0x80
+        cmp $0, %eax
+        jle concrete_close_dir
+
+        movl %eax, %esi
+
+
+
+concrete_end:
+    popl %ebp
+    ret
 
 main:
     lea storage, %edi
