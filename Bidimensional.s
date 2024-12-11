@@ -16,6 +16,8 @@
     add_blocks: .space 4
     add_row: .space 4
 
+    concrete_path: .space 256
+
     storage: .space 1048576
     storage_size: .long 1048576
     rows: .long 1024
@@ -24,6 +26,7 @@
     format_input: .asciz "%d"
     format_id_start_end_output: .asciz "%d: ((%d, %d), (%d, %d))\n"
     format_start_end_output: .asciz "((%d, %d), (%d, %d))\n"
+    format_input_concrete: .asciz "%255s"
 
     format_test: .asciz "Test\n"
     format_test_nr: .asciz "Test %d\n"
@@ -566,6 +569,14 @@ defragmentation_end_pop:
 defragmentation_end:
     ret
 
+concrete:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = path
+
+    movl 8(%ebp), %eax
+
 main:
     lea storage, %edi
     call init_storage
@@ -596,6 +607,9 @@ et_do_action:
 
     cmp $4, %eax
     je et_defrag
+
+    cmp $5, %eax
+    je et_concrete
 
 et_add:
     pushl $N
@@ -678,6 +692,19 @@ et_defrag:
     call defragmentation
 
     call print_storage
+
+    jmp et_decl_O
+
+et_concrete:
+    pushl $concrete_path
+    pushl $format_input_concrete
+    call scanf
+    popl %ebx
+    popl %ebx
+
+    pushl concrete_path
+    call concrete
+    popl %ebx
 
     jmp et_decl_O
 
