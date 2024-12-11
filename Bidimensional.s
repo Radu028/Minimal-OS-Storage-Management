@@ -88,7 +88,7 @@ find_next_file:
 
     # 8(%ebp) = index
 
-    movl $0, find_file_id
+    movb $0, find_file_id
     movl $0, find_file_row_start
     movl $0, find_file_row_end
     movl $0, find_file_col_start
@@ -107,7 +107,8 @@ find_next_file:
         je find_next_file_start_index
 
     end_search_start_index:
-        movl %eax, find_file_id
+        movb %al, find_file_id
+        xorl %eax, %eax
 
         decl %ecx
         pushl %ecx
@@ -148,8 +149,8 @@ print_storage:
         call find_next_file
         popl %ebx
 
-        movl find_file_id, %eax
-        cmp $0, %eax
+        movb find_file_id, %al
+        cmp $0, %al
         je print_storage_end
 
         pushl find_file_col_end
@@ -275,7 +276,7 @@ add_found_space_for_this_file:
     subl add_blocks, %ecx
 
     # Write the file in the storage
-    movl 8(%ebp), %eax
+    movb 8(%ebp), %al
 
     add_found_space_for_this_file_loop:
         movb %al, (%edi, %ecx, 1)
@@ -293,7 +294,7 @@ get:
 
     # 8(%ebp) = file_id
 
-    movl 8(%ebp), %eax
+    movb 8(%ebp), %al
 
     movl $0, find_file_row_start
     movl $0, find_file_row_end
@@ -326,7 +327,7 @@ get:
         movl %eax, find_file_row_start
         movl %edx, find_file_col_start
 
-        movl 8(%ebp), %eax
+        movb 8(%ebp), %al
         xorl %edx, %edx
 
     get_find_file_end_index:
@@ -356,7 +357,7 @@ delete:
 
     # 8(%ebp) = file_id
 
-    movl 8(%ebp), %eax
+    movb 8(%ebp), %al
 
     pushl %eax
     call get
@@ -386,8 +387,8 @@ defragmentation:
         call find_next_file
         popl %ecx
 
-        movl find_file_id, %eax
-        cmp $0, %eax
+        movb find_file_id, %al
+        cmp $0, %al
         je defragmentation_end
 
         pushl find_file_row_start
@@ -399,8 +400,8 @@ defragmentation:
         call find_next_file
         popl %ecx
 
-        movl find_file_id, %eax
-        cmp $0, %eax
+        movb find_file_id, %al
+        cmp $0, %al
         je defragmentation_end_pop
 
         # %edx = end index of first file
@@ -436,7 +437,7 @@ defragmentation:
 
         addl %ecx, %edx # %edx = End index of the second file's new position
 
-        movl find_file_id, %eax
+        movb find_file_id, %al
         incl %ecx
         pushl %ecx
 
@@ -492,7 +493,7 @@ defragmentation:
         movl %eax, %ecx # %ecx = First file's end index
         addl %eax, %edx # %edx = End index of the second file's new position
 
-        movl find_file_id, %eax
+        movb find_file_id, %al
         incl %ecx
         pushl %ecx
 
@@ -531,7 +532,7 @@ defragmentation:
         addl %eax, %edx # %edx = end index of the second file's new position
 
         movl %eax, %ecx
-        movl find_file_id, %eax
+        movb find_file_id, %al
         pushl %ecx
 
         defragmentation_next_row_check_next_row_left_loop:
@@ -737,4 +738,3 @@ test_print_nr:
 
     popl %ebp
     ret
-    
