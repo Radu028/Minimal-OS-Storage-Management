@@ -18,7 +18,7 @@
 
     concrete_path: .space 256
     concrete_buffer: .space 1024
-    concrete_start_buffer: .space 256
+    concrete_stat_buffer: .space 256
 
     storage: .space 1048576
     storage_size: .long 1048576
@@ -600,7 +600,35 @@ concrete:
 
         movl %eax, %esi
 
+    concrete_parse_entries:
+        movl $buffer, %ebx
 
+    concrete_next_entry:
+        movl 10(%ebx), %ecx
+        lea 12(%ebx), %edx
+
+        lea 8(%ebp), %eax
+        addl %edx, %eax # %eax = path + name
+
+        # Syscall stat
+        movl %eax, %ebx
+        movl $106, %eax
+        lea concrete_stat_buffer, %ecx
+        int $0x80
+        cmp $0, %eax
+        jl concrete_end
+
+        movl 8(%ecx), %edx # %edx = st_size (file size)
+
+        addl %ecx, %ebx
+        cmp %ebx, %esi
+        jne concrete_next_entry
+
+    concrete_close_dir:
+        # Syscall close
+        movl $6, %eax
+        movl %edi, %ebx
+        int $0x80
 
 concrete_end:
     popl %ebp
