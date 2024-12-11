@@ -400,8 +400,7 @@ defragmentation:
         popl %edx
         movl find_file_start_index, %eax
         decl %eax
-        subl %edx, %eax
-        # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
+        subl %edx, %eax # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
 
         # %ecx = row index of the first file
         popl %ecx
@@ -421,32 +420,37 @@ defragmentation:
 
     defragmentation_same_row:
         # Move the second file to the left
-        incl %edx
-        movl %edx, %ecx
+        movl %edx, %ecx # %ecx = End index of the first file
 
-        pushl %eax
+        movl find_file_start_index, %eax
+        movl find_file_end_index, %edx
+        subl %eax, %edx
+        incl %edx
+
+        addl %ecx, %edx # %edx = End index of the second file's new position
+
         movl find_file_id, %eax
+        incl %ecx
+        pushl %ecx
 
         # Fill the space between the two files with second file's id
         defragmentation_move_file_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            # TODO: Calculate the end index of the moved file
-            cmp find_file_start_index, %ecx
-            jne defragmentation_move_file_left_loop
+            cmp %ecx, %edx
+            jge defragmentation_move_file_left_loop
 
-        popl %eax
-        movl find_file_end_index, %ecx
-        subl %eax, %ecx
-        addl $2, %ecx
+        movl find_file_start_index, %ecx
+        movl find_file_end_index, %edx
 
         # Empty the space after the second file
         defragmentation_move_file_right_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
-            cmp find_file_end_index, %ecx
-            jle defragmentation_move_file_right_loop
+            cmp %ecx, %edx
+            jge defragmentation_move_file_right_loop
 
+        popl %ecx
         jmp defragmentation_loop
 
     defragmentation_next_row:
