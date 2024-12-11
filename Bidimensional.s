@@ -376,6 +376,10 @@ delete:
 
 defragmentation:
     xorl %ecx, %ecx
+    jmp defragmentation_loop
+
+    defragmentation_loop_pop:
+        popl %eax
 
     defragmentation_loop:
         pushl %ecx
@@ -402,14 +406,15 @@ defragmentation:
         # %edx = end index of first file
         popl %edx
         movl find_file_start_index, %eax
-        decl %eax
         subl %edx, %eax # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
 
-        # %ecx = row index of the first file
-        popl %ecx
+        movl find_file_start_index, %ecx
 
         cmp $1, %eax
-        je defragmentation_loop
+        je defragmentation_loop_pop
+        
+        # %ecx = row index of the first file
+        popl %ecx
 
         # Check if the second file is on the same row and can be moved a few columns to the left
         # OR
@@ -425,9 +430,8 @@ defragmentation:
         # Move the second file to the left
         movl %edx, %ecx # %ecx = End index of the first file
 
-        movl find_file_start_index, %eax
         movl find_file_end_index, %edx
-        subl %eax, %edx
+        subl find_file_start_index, %edx
         incl %edx
 
         addl %ecx, %edx # %edx = End index of the second file's new position
@@ -458,9 +462,8 @@ defragmentation:
 
     defragmentation_next_row:
         # Calculate second file's size in %ecx
-        movl find_file_start_index, %eax
         movl find_file_end_index, %ecx
-        subl %eax, %ecx
+        subl find_file_start_index, %ecx
         incl %ecx
 
         pushl %edx
@@ -512,6 +515,7 @@ defragmentation:
         jmp defragmentation_loop
 
     defragmentation_next_row_check_next_row:
+        movl %eax, %ecx
         movl find_file_col_start, %eax
 
         cmp $0, %eax
@@ -549,7 +553,6 @@ defragmentation:
         jmp defragmentation_loop
 
     defragmentation_loop_continue:
-        movl %edx, %ecx
         incl %ecx
 
         jmp defragmentation_loop
@@ -702,6 +705,7 @@ test_print:
 
     pushl $format_test
     call printf
+    popl %ebx
 
     popl %edx
     popl %ecx
