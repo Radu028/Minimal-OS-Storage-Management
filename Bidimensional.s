@@ -16,10 +16,10 @@
     add_blocks: .space 4
     add_row: .space 4
 
-    storage: .space 1024
-    storage_size: .long 1024
-    rows: .long 32
-    cols: .long 32
+    storage: .space 1048576
+    storage_size: .long 1048576
+    rows: .long 1024
+    cols: .long 1024
 
     format_input: .asciz "%d"
     format_id_start_end_output: .asciz "%d: ((%d, %d), (%d, %d))\n"
