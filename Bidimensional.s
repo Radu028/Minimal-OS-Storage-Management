@@ -16,7 +16,7 @@
     add_blocks: .space 4
     add_row: .space 4
 
-    concrete_path: .space 256
+    concrete_path: .asciz "./test"
     concrete_buffer: .space 1024
     concrete_stat_buffer: .space 256
 
@@ -577,31 +577,34 @@ concrete:
 
     # 8(%ebp) = path
 
+
     concrete_open_dir:
         # Syscall open
         movl $5, %eax
-        lea 8(%ebp), %ebx
+        leal concrete_path, %ebx
         xorl %ecx, %ecx
         int $0x80
-        cmp $0, %eax
+
+        cmpl $0, %eax
         jl concrete_end
 
         movl %eax, %edi
 
     concrete_read_dir:
         # Syscall getdents
-        movl $141, %eax
+        movl $220, %eax
         movl %edi, %ebx
-        lea concrete_buffer, %ecx
+        leal concrete_buffer, %ecx
         movl $1024, %edx
         int $0x80
+
         cmp $0, %eax
         jle concrete_close_dir
 
         movl %eax, %esi
 
     concrete_parse_entries:
-        movl $buffer, %ebx
+        movl $concrete_buffer, %ebx
 
     concrete_next_entry:
         movl 10(%ebx), %ecx
@@ -616,27 +619,27 @@ concrete:
             pushl %esi
             movl %edx, %esi
             xorl %eax, %eax
-            xorl %edx, %edx
+            xorl %ecx, %ecx
 
         concrete_generate_file_id_loop:
-            movb (%esi), %dl
-            cmp $0, %dl
+            movb (%esi), %cl
+            cmpb $0, %cl
             je concrete_generate_file_id_end
 
-            addl %edx, %eax
+            addl %ecx, %eax
 
             incl %esi
             jmp concrete_generate_file_id_loop
 
         concrete_generate_file_id_end:
+            movl $255, %ecx
             xorl %edx, %edx
-            movl $255, %esi
-            divl %esi
-            popl %esi
+            divl %ecx
             incl %eax
 
-        pushl %eax
+            popl %esi
 
+        pushl %eax
 
         # Syscall stat
         movl $106, %eax
@@ -647,7 +650,12 @@ concrete:
 
         popl %eax
 
+        pushl %eax
+        pushl %ebx
+        pushl %ecx
+        pushl %edx
         pushl %edi
+        pushl %esi
         lea storage, %edi
 
         pushl 8(%ecx) # st_size (file size)
@@ -656,7 +664,12 @@ concrete:
         popl %eax
         popl %eax
 
+        popl %esi
         popl %edi
+        popl %edx
+        popl %ecx
+        popl %ebx
+        popl %eax
 
         addl %ecx, %ebx
         cmp %ebx, %esi
@@ -791,11 +804,11 @@ et_defrag:
     jmp et_decl_O
 
 et_concrete:
-    pushl $concrete_path
-    pushl $format_input_concrete
-    call scanf
-    popl %ebx
-    popl %ebx
+    # pushl $concrete_path
+    # pushl $format_input_concrete
+    # call scanf
+    # popl %ebx
+    # popl %ebx
 
     pushl concrete_path
     call concrete
