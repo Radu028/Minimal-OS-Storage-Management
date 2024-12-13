@@ -1,3 +1,4 @@
+.section .note.GNU-stack,"",@progbits
 .data
     O: .space 4
     N: .space 4
@@ -19,6 +20,9 @@
     concrete_path: .asciz "./test"
     concrete_buffer: .space 1024
     concrete_stat_buffer: .space 256
+
+    concrete_null_file_1: .asciz "."
+    concrete_null_file_2: .asciz ".."
 
     storage: .space 1048576
     storage_size: .long 1048576
@@ -592,14 +596,14 @@ concrete:
 
     concrete_read_dir:
         # Syscall getdents
-        movl $220, %eax
+        movl $141, %eax
         movl %edi, %ebx
         leal concrete_buffer, %ecx
         movl $1024, %edx
         int $0x80
 
         cmp $0, %eax
-        jle concrete_close_dir
+        jle concrete_end
 
         movl %eax, %esi
 
@@ -607,8 +611,15 @@ concrete:
         movl $concrete_buffer, %ebx
 
     concrete_next_entry:
-        movl 10(%ebx), %ecx
-        lea 12(%ebx), %edx
+        movl 10(%ebx), %ecx # d_reclen (entry length)
+        lea 12(%ebx), %edx  # d_name (entry name)
+
+        # Skip if the file is "." or ".."
+        cmp concrete_null_file_1, %edx
+        je concrete_skip_entry
+
+        cmp concrete_null_file_2, %edx
+        je concrete_skip_entry
 
         lea 8(%ebp), %eax
         addl %edx, %eax # %eax = path + name
@@ -671,15 +682,10 @@ concrete:
         popl %ebx
         popl %eax
 
+    comncrete_skip_entry:
         addl %ecx, %ebx
         cmp %ebx, %esi
         jne concrete_next_entry
-
-    concrete_close_dir:
-        # Syscall close
-        movl $6, %eax
-        movl %edi, %ebx
-        int $0x80
 
 concrete_end:
     popl %ebp
