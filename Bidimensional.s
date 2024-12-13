@@ -18,6 +18,9 @@
     add_row: .space 4
 
     concrete_path: .asciz "./test"
+    concrete_slash: .asciz "/"
+    concrete_path_buffer: .space 256
+
     concrete_buffer: .space 1024
     concrete_stat_buffer: .space 256
 
@@ -620,6 +623,44 @@ concrete:
 
         cmp concrete_null_file_2, %edx
         je concrete_skip_entry
+
+        # Get absolute path of the file
+        # TODO: Da push la registrii care sunt folositi in blockul asta de cod
+        leal concrete_path, %esi
+        leal concrete_path_buffer, %edi
+        xorl %eax, %eax
+
+        concrete_copy_base_path:
+            movb (%esi), %al
+            movb %al, (%edi)
+            incl %esi
+            incl %edi
+            cmp $0, %al
+            jne concrete_copy_base_path
+
+        leal concrete_slash, %esi
+
+        concrete_copy_slash:
+            movb (%esi), %al
+            movb %al, (%edi)
+            incl %esi
+            incl %edi
+            cmp $0, %al
+            jne concrete_copy_slash
+
+        lea 12(%ebx), %esi
+
+        concrete_copy_file_name:
+            movb (%esi), %al
+            movb %al, (%edi)
+            incl %esi
+            incl %edi
+            cmp $0, %al
+            jne concrete_copy_file_name
+
+        # ###
+
+
 
         lea 8(%ebp), %eax
         addl %edx, %eax # %eax = path + name
