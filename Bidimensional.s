@@ -608,14 +608,13 @@ concrete:
         cmp $0, %eax
         jle concrete_end
 
-        movl %eax, %esi
-
-    concrete_parse_entries:
-        movl $concrete_buffer, %ebx
+        pushl %eax
 
     concrete_next_entry:
         movl 10(%ebx), %ecx # d_reclen (entry length)
-        lea 12(%ebx), %edx  # d_name (entry name)
+        pushl %ecx
+
+        lea 12(%ebx), %ecx  # d_name (entry name)
 
         # Skip if the file is "." or ".."
         cmp concrete_null_file_1, %edx
@@ -625,7 +624,6 @@ concrete:
         je concrete_skip_entry
 
         # Get absolute path of the file
-        # TODO: Da push la registrii care sunt folositi in blockul asta de cod
         leal concrete_path, %esi
         leal concrete_path_buffer, %edi
         xorl %eax, %eax
@@ -658,56 +656,34 @@ concrete:
             cmp $0, %al
             jne concrete_copy_file_name
 
-        # ###
+    concrete_get_file_id:
+        # Syscall open (for file id)
+        movl $5, %eax
+        leal concrete_path_buffer, %ebx # For syscall stat
+        xorl %ecx, %ecx
+        int $0x80
 
+        cmpl $0, %eax
+        jl concrete_end
 
-
-        lea 8(%ebp), %eax
-        addl %edx, %eax # %eax = path + name
-
-        movl %eax, %ebx # For syscall stat
-
-        concrete_generate_file_id:
-            pushl %esi
-            movl %edx, %esi
-            xorl %eax, %eax
-            xorl %ecx, %ecx
-
-        concrete_generate_file_id_loop:
-            movb (%esi), %cl
-            cmpb $0, %cl
-            je concrete_generate_file_id_end
-
-            addl %ecx, %eax
-
-            incl %esi
-            jmp concrete_generate_file_id_loop
-
-        concrete_generate_file_id_end:
-            movl $255, %ecx
-            xorl %edx, %edx
-            divl %ecx
-            incl %eax
-
-            popl %esi
-
+        movl $255, %ecx
+        xorl %edx, %edx
+        divl %ecx
         pushl %eax
 
-        # Syscall stat
+    concrete_get_file_dimension:
+        # Syscall stat (for file dimension)
         movl $106, %eax
         lea concrete_stat_buffer, %ecx
         int $0x80
+
         cmp $0, %eax
         jl concrete_end
 
         popl %eax
 
-        pushl %eax
         pushl %ebx
-        pushl %ecx
-        pushl %edx
         pushl %edi
-        pushl %esi
         lea storage, %edi
 
         pushl 8(%ecx) # st_size (file size)
@@ -716,16 +692,15 @@ concrete:
         popl %eax
         popl %eax
 
-        popl %esi
         popl %edi
-        popl %edx
-        popl %ecx
         popl %ebx
+
+        popl %ecx
         popl %eax
 
     comncrete_skip_entry:
         addl %ecx, %ebx
-        cmp %ebx, %esi
+        cmp %eax, %ebx
         jne concrete_next_entry
 
 concrete_end:
