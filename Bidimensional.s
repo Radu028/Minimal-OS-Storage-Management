@@ -21,7 +21,7 @@
     concrete_slash: .asciz "/"
     concrete_path_buffer: .space 2048
 
-    concrete_buffer: .space 1024
+    concrete_buffer: .space 2048
     concrete_stat_buffer: .space 256
 
     concrete_null_file_1: .asciz "."
@@ -643,17 +643,34 @@ concrete:
         cmp $0, %eax
         jle concrete_end
 
-        pushl %eax
         movl $concrete_buffer, %ebx
 
+        movl %eax, %esi
+        addl $concrete_buffer, %esi
+        movl %esi, %edx
+
     concrete_next_entry:
-        movl 10(%ebx), %ecx # d_reclen (entry length)
+        pushl %edx
+
+        xorl %ecx, %ecx
+        movw 8(%ebx), %cx # d_reclen (entry length)
+        pushl %ecx
+        # #############################
         # pushl %ecx
         # call test_print_nr
         # popl %ecx
-        pushl %ecx
+        # #############################
 
-        leal 12(%ebx), %ecx  # d_name (entry name)
+        lea 10(%ebx), %ecx  # d_name (entry name)
+        # #############################
+         lea 10(%ebx), %esi  # d_name (entry name)
+         pushl %esi
+         call test_print_str
+         popl %esi
+         pushl $format_test_new_line
+         call test_print_str
+         popl %esi
+        # #############################
 
         # Skip if the file is "." or ".."
         pushl $concrete_null_file_1
@@ -673,11 +690,6 @@ concrete:
 
         cmp $0, %eax
         je concrete_skip_entry
-
-        pushl %ecx
-        call test_print_str
-        popl %ecx
-
 
         # Get absolute path of the file
         leal concrete_path, %esi
@@ -711,6 +723,8 @@ concrete:
             incl %edi
             cmp $0, %al
             jne concrete_copy_file_name
+
+        # movb $0, (%edi)
 
     concrete_get_file_id:
         # Syscall open (for file id)
@@ -751,14 +765,13 @@ concrete:
         popl %edi
         popl %ebx
 
-        popl %ecx
-        popl %eax
-        addl $concrete_buffer, %eax
-
     concrete_skip_entry:
+        popl %ecx
+        popl %edx
+
         addl %ecx, %ebx
-        cmp %eax, %ebx
-        jne concrete_next_entry
+        cmp %ebx, %edx
+        jge concrete_next_entry
 
 concrete_end:
     popl %ebp
