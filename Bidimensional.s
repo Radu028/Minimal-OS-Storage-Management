@@ -17,9 +17,9 @@
     add_blocks: .space 4
     add_row: .space 4
 
-    concrete_path: .asciz "./test"
+    concrete_path: .space 2048
     concrete_slash: .asciz "/"
-    concrete_path_buffer: .space 256
+    concrete_path_buffer: .space 2048
 
     concrete_buffer: .space 1024
     concrete_stat_buffer: .space 256
@@ -39,6 +39,9 @@
 
     format_test: .asciz "Test\n"
     format_test_nr: .asciz "Test %d\n"
+    format_test_str: .asciz "Test: %s\n"
+    format_test_new_line: .asciz "\n"
+    format_test_slash_zero: .asciz "/0"
 
 .text
 
@@ -193,6 +196,38 @@ print_storage:
 
 
 print_storage_end:
+    ret
+
+strcmp:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = string 1
+    # 12(%ebp) = string 2
+
+    movl 8(%ebp), %esi
+    movl 12(%ebp), %edi
+
+    strcmp_loop:
+        movb (%esi), %al
+        movb (%edi), %bl
+        cmpb %al, %bl
+        jne strcmp_not_equal
+        testb %al, %al
+        je strcmp_equal
+        incl %esi
+        incl %edi
+        jmp strcmp_loop
+
+    strcmp_equal:
+        xorl %eax, %eax
+        jmp strcmp_end
+
+    strcmp_not_equal:
+        movl $1, %eax
+
+strcmp_end:
+    popl %ebp
     ret
 
 add:
@@ -584,11 +619,11 @@ concrete:
 
     # 8(%ebp) = path
 
-
     concrete_open_dir:
         # Syscall open
         movl $5, %eax
         leal concrete_path, %ebx
+
         xorl %ecx, %ecx
         int $0x80
 
@@ -609,19 +644,40 @@ concrete:
         jle concrete_end
 
         pushl %eax
+        movl $concrete_buffer, %ebx
 
     concrete_next_entry:
         movl 10(%ebx), %ecx # d_reclen (entry length)
+        # pushl %ecx
+        # call test_print_nr
+        # popl %ecx
         pushl %ecx
 
-        lea 12(%ebx), %ecx  # d_name (entry name)
+        leal 12(%ebx), %ecx  # d_name (entry name)
 
         # Skip if the file is "." or ".."
-        cmp concrete_null_file_1, %edx
+        pushl $concrete_null_file_1
+        pushl %ecx
+        call strcmp
+        popl %ecx
+        popl %edx
+
+        cmp $0, %eax
         je concrete_skip_entry
 
-        cmp concrete_null_file_2, %edx
+        pushl $concrete_null_file_2
+        pushl %ecx
+        call strcmp
+        popl %ecx
+        popl %edx
+
+        cmp $0, %eax
         je concrete_skip_entry
+
+        pushl %ecx
+        call test_print_str
+        popl %ecx
+
 
         # Get absolute path of the file
         leal concrete_path, %esi
@@ -697,8 +753,9 @@ concrete:
 
         popl %ecx
         popl %eax
+        addl $concrete_buffer, %eax
 
-    comncrete_skip_entry:
+    concrete_skip_entry:
         addl %ecx, %ebx
         cmp %eax, %ebx
         jne concrete_next_entry
@@ -826,11 +883,11 @@ et_defrag:
     jmp et_decl_O
 
 et_concrete:
-    # pushl $concrete_path
-    # pushl $format_input_concrete
-    # call scanf
-    # popl %ebx
-    # popl %ebx
+    pushl $concrete_path
+    pushl $format_input_concrete
+    call scanf
+    popl %ebx
+    popl %ebx
 
     pushl concrete_path
     call concrete
@@ -860,11 +917,15 @@ test_print:
     pushl %ebx
     pushl %ecx
     pushl %edx
+    pushl %esi
+    pushl %edi
 
     pushl $format_test
     call printf
     popl %ebx
 
+    popl %edi
+    popl %esi
     popl %edx
     popl %ecx
     popl %ebx
@@ -880,6 +941,8 @@ test_print_nr:
     pushl %ebx
     pushl %ecx
     pushl %edx
+    pushl %esi
+    pushl %edi
 
     movl 8(%ebp), %eax
     pushl %eax
@@ -888,6 +951,8 @@ test_print_nr:
     popl %ebx
     popl %ebx
 
+    popl %edi
+    popl %esi
     popl %edx
     popl %ecx
     popl %ebx
@@ -895,3 +960,49 @@ test_print_nr:
 
     popl %ebp
     ret
+
+test_print_str:
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+    pushl %esi
+    pushl %edi
+
+    strlen:
+        movl $0, %eax
+        movl 8(%ebp), %esi
+    strlen_loop:
+        cmpb $0, (%esi)
+        je strlen_done
+        incl %esi
+        incl %eax
+        jmp strlen_loop
+    strlen_done:
+        movl %eax, %edx
+
+    movl $4, %eax
+    movl $1, %ebx
+    movl 8(%ebp), %ecx
+    int $0x80
+
+    # movl $4, %eax
+    # movl $1, %ebx
+    # movl $format_test_new_line, %ecx
+    # movl $1, %edx
+    # int $0x80
+
+    popl %edi
+    popl %esi
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    popl %ebp
+    ret
+
+
