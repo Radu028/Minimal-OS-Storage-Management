@@ -43,6 +43,10 @@
     format_test_new_line: .asciz "\n"
     format_test_slash_zero: .asciz "/0"
 
+    str1: .asciz "ab"
+    str2: .asciz "cd"
+    result: .space 1024
+
 .text
 
 .global main
@@ -237,43 +241,44 @@ concat_strings:
     pushl %ebp
     movl %esp, %ebp
 
-    pushl %ebx
     pushl %ecx
     pushl %edx
 
-    # 8(%ebp) = string 1
-    # 12(%ebp) = string 2
+    # 8(%ebp) = str1
+    # 12(%ebp) = str2
     # 16(%ebp) = result
 
+    movl 16(%ebp), %edi
     movl 8(%ebp), %esi
-    movl 12(%ebp), %edi
-    movl 16(%ebp), %ebx
-
-    xorl %ecx, %ecx
 
     concat_strings_copy_string_1:
         movb (%esi), %al
-        movb %al, (%ebx, %ecx, 1)
-        incl %ecx
-        cmpb $0, %al
-        jne concat_strings_copy_string_1
-
-    movl $0, %edx
+        movb %al, (%edi)
+        testb %al, %al
+        je concat_strings_copy_string_2
+        incl %esi
+        incl %edi
+        jmp concat_strings_copy_string_1
 
     concat_strings_copy_string_2:
-        movb (%edi), %al
-        movb %al, (%ebx, %ecx, 1)
-        incl %ecx
-        incl %edx
-        cmpb $0, %al
-        jne concat_strings_copy_string_2
+        movl 12(%ebp), %esi
+    concat_strings_copy_string_2_loop:
+        movb (%esi), %al
+        movb %al, (%edi)
+        testb %al, %al
+        je concat_strings_end
+        incl %esi
+        incl %edi
+        jmp concat_strings_copy_string_2_loop
+
+concat_strings_end:
+    movb $0, (%edi)
 
     popl %edx
     popl %ecx
-    popl %ebx
 
     popl %ebp
-    ret    
+    ret
 
 add:
     pushl %ebp
@@ -736,6 +741,19 @@ concrete:
         cmp $0, %eax
         je concrete_skip_entry
 
+        # #############################
+        pushl $result
+        pushl $str2
+        pushl $str1
+        call concat_strings
+        popl %eax
+        popl %eax
+        popl %eax
+
+        pushl $result
+        call test_print_str
+        popl %eax
+        # #############################
         # Get absolute path of the file
         leal concrete_path, %esi
         leal concrete_path_buffer, %edi
@@ -758,19 +776,6 @@ concrete:
             incl %edi
             cmpb $0, %al
             jne concrete_copy_slash
-        # #############################
-        pushl $concrete_path_buffer
-        pushl $concrete_slash
-        pushl $concrete_buffer
-        call concat_strings
-        popl %eax
-        popl %eax
-        popl %eax
-
-        pushl $concrete_path_buffer
-        call test_print_str
-        popl %eax
-        # #############################
 
         lea 10(%ebx), %esi
 
@@ -783,13 +788,6 @@ concrete:
             jne concrete_copy_file_name
 
         # movb $0, (%edi)
-
-        pushl $concrete_path_buffer
-        call test_print_str
-        popl %eax
-        pushl $format_test_new_line
-        call test_print_str
-        popl %eax
 
     concrete_get_file_id:
         # Syscall open (for file id)
@@ -814,10 +812,6 @@ concrete:
         movl %esi, %ebx
         lea concrete_stat_buffer, %ecx
         int $0x80
-
-        pushl %eax
-        call test_print_nr
-        popl %eax
 
         # cmp $0, %eax
         # jl concrete_end
