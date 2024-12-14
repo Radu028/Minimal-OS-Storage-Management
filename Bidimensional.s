@@ -305,7 +305,7 @@ add:
     movl %esp, %ebp
 
     # File id = 8(%ebp)
-    # File dimension = 12(%ebp)
+    # File blocks = 12(%ebp)
 
     movl $0, add_row
     movl 12(%ebp), %eax
