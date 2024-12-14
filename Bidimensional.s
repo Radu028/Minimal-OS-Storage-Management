@@ -18,11 +18,12 @@
     add_row: .space 4
 
     concrete_path: .space 1024
-    concrete_slash: .asciz "abc"
-    concrete_path_buffer: .space 1024
+    concrete_slash: .asciz "/"
+    concrete_path_slash_buffer: .space 1024
+    concrete_path_file_buffer: .space 1024
 
     concrete_buffer: .space 1024
-    concrete_stat_buffer: .space 256
+    concrete_stat_buffer: .space 64
 
     concrete_null_file_1: .asciz "."
     concrete_null_file_2: .asciz ".."
@@ -51,7 +52,27 @@
 
 .global main
 
-# %eax = index
+convert_blocks_to_add:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = kb
+
+    movl 8(%ebp), %eax
+    xorl %edx, %edx
+    movl $8, %ecx
+    divl %ecx
+
+    cmpl $0, %edx
+    je convert_blocks_to_add_end
+
+    incl %eax
+
+convert_blocks_to_add_end:
+    popl %ebp
+    ret
+
+# Returns %eax = index
 calc_index:
     pushl %ebp
     movl %esp, %ebp
@@ -71,7 +92,7 @@ calc_index:
     popl %ebp
     ret
 
-# %eax = row (from 0 to rows - 1) and %edx = col (from 0 to cols - 1)
+# Returns %eax = row (from 0 to rows - 1) and %edx = col (from 0 to cols - 1)
 calc_position:
     pushl %ebp
     movl %esp, %ebp
@@ -673,7 +694,6 @@ concrete:
         # Syscall open
         movl $5, %eax
         leal concrete_path, %ebx
-
         xorl %ecx, %ecx
         int $0x80
 
@@ -709,6 +729,7 @@ concrete:
         # pushl %ecx
         # call test_print_nr
         # popl %ecx
+        call test_print
         # #############################
 
         lea 10(%ebx), %ecx  # d_name (entry name)
@@ -741,60 +762,35 @@ concrete:
         cmp $0, %eax
         je concrete_skip_entry
 
-        # #############################
-        pushl $result
-        pushl $str2
-        pushl $str1
+        # Get the file path
+        pushl $concrete_path_slash_buffer
+        pushl $concrete_slash
+        pushl $concrete_path
         call concat_strings
         popl %eax
         popl %eax
         popl %eax
 
-        pushl $result
-        call test_print_str
+        leal 10(%ebx), %eax
+
+        pushl $concrete_path_file_buffer
+        pushl %eax
+        pushl $concrete_path_slash_buffer
+        call concat_strings
         popl %eax
-        # #############################
-        # Get absolute path of the file
-        leal concrete_path, %esi
-        leal concrete_path_buffer, %edi
-        xorl %eax, %eax
-
-        concrete_copy_base_path:
-            movb (%esi), %al
-            movb %al, (%edi)
-            incl %esi
-            incl %edi
-            cmpb $0, %al
-            jne concrete_copy_base_path
-
-        leal concrete_slash, %esi
-
-        concrete_copy_slash:
-            movb (%esi), %al
-            movb %al, (%edi)
-            incl %esi
-            incl %edi
-            cmpb $0, %al
-            jne concrete_copy_slash
-
-        lea 10(%ebx), %esi
-
-        concrete_copy_file_name:
-            movb (%esi), %al
-            movb %al, (%edi)
-            incl %esi
-            incl %edi
-            cmp $0, %al
-            jne concrete_copy_file_name
-
-        # movb $0, (%edi)
+        popl %eax
+        popl %eax
 
     concrete_get_file_id:
         # Syscall open (for file id)
         movl $5, %eax
-        leal concrete_path_buffer, %ebx
+        leal concrete_path_file_buffer, %ebx
         xorl %ecx, %ecx
         int $0x80
+
+        pushl %eax
+        call test_print_nr
+        popl %eax
 
         # cmpl $0, %eax
         # jl concrete_end
@@ -810,8 +806,12 @@ concrete:
         # Syscall stat (for file dimension)
         movl $108, %eax
         movl %esi, %ebx
-        lea concrete_stat_buffer, %ecx
+        leal concrete_stat_buffer, %ecx
         int $0x80
+
+        pushl 20(%ecx)
+        call test_print_nr
+        popl %eax
 
         # cmp $0, %eax
         # jl concrete_end
@@ -822,7 +822,7 @@ concrete:
         pushl %edi
         lea storage, %edi
 
-        pushl 8(%ecx) # st_size (file size)
+        pushl 20(%ecx) # st_size (file size)
         pushl %eax # file_id
         call add
         popl %eax
@@ -898,6 +898,10 @@ et_add:
         popl %ebx
 
         pushl file_dimension
+        call convert_blocks_to_add
+        popl %ebx
+
+        pushl %eax
         pushl file_id
         call add
         popl %ebx
