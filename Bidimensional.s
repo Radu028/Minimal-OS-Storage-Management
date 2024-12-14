@@ -713,23 +713,8 @@ concrete:
         xorl %ecx, %ecx
         movw 8(%ebx), %cx # d_reclen (entry length)
         pushl %ecx
-        # #############################
-        # pushl %ecx
-        # call test_print_nr
-        # popl %ecx
-        call test_print
-        # #############################
 
-        lea 10(%ebx), %ecx  # d_name (entry name)
-        # #############################
-         leal 10(%ebx), %esi  # d_name (entry name)
-         pushl %esi
-         call test_print_str
-         popl %esi
-         pushl $format_test_new_line
-         call test_print_str
-         popl %esi
-        # #############################
+        leal 10(%ebx), %ecx  # d_name (entry name)
 
         # Skip if the file is "." or ".."
         pushl $concrete_null_file_1
@@ -776,10 +761,6 @@ concrete:
         xorl %ecx, %ecx
         int $0x80
 
-        pushl %eax
-        call test_print_nr
-        popl %eax
-
         # cmpl $0, %eax
         # jl concrete_end
 
@@ -788,7 +769,8 @@ concrete:
         movl $255, %ecx
         xorl %edx, %edx
         divl %ecx
-        pushl %eax
+        incl %edx
+        pushl %edx
 
     concrete_get_file_dimension:
         # Syscall stat (for file dimension)
@@ -796,10 +778,6 @@ concrete:
         movl %esi, %ebx
         leal concrete_stat_buffer, %ecx
         int $0x80
-
-        pushl 20(%ecx)
-        call test_print_nr
-        popl %eax
 
         # cmp $0, %eax
         # jl concrete_end
@@ -828,6 +806,7 @@ concrete:
         jge concrete_next_entry
 
 concrete_end:
+    call test_print
     popl %ebp
     ret
 
@@ -963,6 +942,8 @@ et_concrete:
     pushl concrete_path
     call concrete
     popl %ebx
+
+    call print_storage
 
     jmp et_decl_O
 
