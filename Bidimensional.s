@@ -468,13 +468,16 @@ delete:
 
     movl find_file_start_index, %ecx
 
-    # STIU SIGUR CA PRIMESC UN FISIER EXISTENT?
+    cmpl $0, %ecx
+    je delete_end
+
     delete_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
         cmp find_file_end_index, %ecx
         jle delete_loop
 
+delete_end:
     popl %ebp
     ret
 
