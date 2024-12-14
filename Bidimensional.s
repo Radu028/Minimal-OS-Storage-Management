@@ -14,7 +14,6 @@
     find_file_start_index: .space 4
     find_file_end_index: .space 4
 
-    add_blocks: .space 4
     add_row: .space 4
 
     concrete_path: .space 1024
@@ -308,25 +307,11 @@ add:
     # File id = 8(%ebp)
     # File dimension = 12(%ebp)
 
-    # Calculate the blocks needed in %eax
-    movl 12(%ebp), %eax
-    xorl %edx, %edx
-    movl $8, %ecx
-    divl %ecx
-
     movl $0, add_row
-    
-    # Ceil for %eax if it is the case, if not skip
-    cmp $0, %edx
-    je add_skip_ceil
+    movl 12(%ebp), %eax
 
-    incl %eax
-
-add_skip_ceil:
     cmp cols, %eax
     jg add_end
-
-    movl %eax, add_blocks
 
     # Find free blocks
     xorl %ecx, %ecx
@@ -366,7 +351,7 @@ add_no_free_block:
     # Recalculate the start index in %ecx
     movl %edx, %ecx
     incl %ecx
-    subl add_blocks, %ecx
+    subl 12(%ebp), %ecx
     jmp add_find_free_space_loop
 
 add_no_free_block_next_line_pop:
@@ -378,7 +363,7 @@ add_no_free_block_next_line_pop:
     jge add_end
 
     # Recalculate the end index in %edx
-    pushl add_blocks
+    pushl 12(%ebp)
     pushl add_row
     call calc_index
     popl %ebx
@@ -391,7 +376,7 @@ add_no_free_block_next_line_pop:
 
 add_found_space_for_this_file:
     # Calculate again the start index in %ecx
-    subl add_blocks, %ecx
+    subl 12(%ebp), %ecx
 
     # Write the file in the storage
     movb 8(%ebp), %al
