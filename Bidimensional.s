@@ -17,11 +17,11 @@
     add_blocks: .space 4
     add_row: .space 4
 
-    concrete_path: .space 2048
-    concrete_slash: .asciz "/"
-    concrete_path_buffer: .space 2048
+    concrete_path: .space 1024
+    concrete_slash: .asciz "abc"
+    concrete_path_buffer: .space 1024
 
-    concrete_buffer: .space 2048
+    concrete_buffer: .space 1024
     concrete_stat_buffer: .space 256
 
     concrete_null_file_1: .asciz "."
@@ -202,6 +202,8 @@ strcmp:
     pushl %ebp
     movl %esp, %ebp
 
+    pushl %ebx
+
     # 8(%ebp) = string 1
     # 12(%ebp) = string 2
 
@@ -227,8 +229,51 @@ strcmp:
         movl $1, %eax
 
 strcmp_end:
+    popl %ebx
     popl %ebp
     ret
+
+concat_strings:
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+
+    # 8(%ebp) = string 1
+    # 12(%ebp) = string 2
+    # 16(%ebp) = result
+
+    movl 8(%ebp), %esi
+    movl 12(%ebp), %edi
+    movl 16(%ebp), %ebx
+
+    xorl %ecx, %ecx
+
+    concat_strings_copy_string_1:
+        movb (%esi), %al
+        movb %al, (%ebx, %ecx, 1)
+        incl %ecx
+        cmpb $0, %al
+        jne concat_strings_copy_string_1
+
+    movl $0, %edx
+
+    concat_strings_copy_string_2:
+        movb (%edi), %al
+        movb %al, (%ebx, %ecx, 1)
+        incl %ecx
+        incl %edx
+        cmpb $0, %al
+        jne concat_strings_copy_string_2
+
+    popl %edx
+    popl %ecx
+    popl %ebx
+
+    popl %ebp
+    ret    
 
 add:
     pushl %ebp
@@ -636,7 +681,7 @@ concrete:
         # Syscall getdents
         movl $141, %eax
         movl %edi, %ebx
-        leal concrete_buffer, %ecx
+        movl $concrete_buffer, %ecx
         movl $1024, %edx
         int $0x80
 
@@ -663,7 +708,7 @@ concrete:
 
         lea 10(%ebx), %ecx  # d_name (entry name)
         # #############################
-         lea 10(%ebx), %esi  # d_name (entry name)
+         leal 10(%ebx), %esi  # d_name (entry name)
          pushl %esi
          call test_print_str
          popl %esi
@@ -701,7 +746,7 @@ concrete:
             movb %al, (%edi)
             incl %esi
             incl %edi
-            cmp $0, %al
+            cmpb $0, %al
             jne concrete_copy_base_path
 
         leal concrete_slash, %esi
@@ -711,10 +756,23 @@ concrete:
             movb %al, (%edi)
             incl %esi
             incl %edi
-            cmp $0, %al
+            cmpb $0, %al
             jne concrete_copy_slash
+        # #############################
+        pushl $concrete_path_buffer
+        pushl $concrete_slash
+        pushl $concrete_buffer
+        call concat_strings
+        popl %eax
+        popl %eax
+        popl %eax
 
-        lea 12(%ebx), %esi
+        pushl $concrete_path_buffer
+        call test_print_str
+        popl %eax
+        # #############################
+
+        lea 10(%ebx), %esi
 
         concrete_copy_file_name:
             movb (%esi), %al
@@ -726,15 +784,24 @@ concrete:
 
         # movb $0, (%edi)
 
+        pushl $concrete_path_buffer
+        call test_print_str
+        popl %eax
+        pushl $format_test_new_line
+        call test_print_str
+        popl %eax
+
     concrete_get_file_id:
         # Syscall open (for file id)
         movl $5, %eax
-        leal concrete_path_buffer, %ebx # For syscall stat
+        leal concrete_path_buffer, %ebx
         xorl %ecx, %ecx
         int $0x80
 
-        cmpl $0, %eax
-        jl concrete_end
+        # cmpl $0, %eax
+        # jl concrete_end
+
+        movl %eax, %esi
 
         movl $255, %ecx
         xorl %edx, %edx
@@ -743,12 +810,17 @@ concrete:
 
     concrete_get_file_dimension:
         # Syscall stat (for file dimension)
-        movl $106, %eax
+        movl $108, %eax
+        movl %esi, %ebx
         lea concrete_stat_buffer, %ecx
         int $0x80
 
-        cmp $0, %eax
-        jl concrete_end
+        pushl %eax
+        call test_print_nr
+        popl %eax
+
+        # cmp $0, %eax
+        # jl concrete_end
 
         popl %eax
 
