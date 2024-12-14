@@ -21,7 +21,7 @@
     concrete_path_slash_buffer: .space 1024
     concrete_path_file_buffer: .space 1024
 
-    concrete_buffer: .space 1024
+    concrete_buffer: .space 4096
     concrete_stat_buffer: .space 64
 
     concrete_null_file_1: .asciz "."
@@ -254,6 +254,26 @@ strcmp:
 
 strcmp_end:
     popl %ebx
+    popl %ebp
+    ret
+
+clear_string:
+    pushl %ebp
+    movl %esp, %ebp
+
+    # 8(%ebp) = string pointer
+    # 12(%ebp) = string size
+
+    movl 8(%ebp), %edi
+    movl 12(%ebp), %ecx
+    xorl %eax, %eax
+
+clear_string_loop:
+    movb %al, (%edi)
+    incl %edi
+    decl %ecx
+    jnz clear_string_loop
+
     popl %ebp
     ret
 
@@ -699,14 +719,31 @@ concrete:
         movl $141, %eax
         movl %edi, %ebx
         movl $concrete_buffer, %ecx
-        movl $1024, %edx
+        movl $4096, %edx
         int $0x80
 
         cmp $0, %eax
         jle concrete_end
 
+        # Add slash to the path
+        pushl $concrete_path_slash_buffer
+        pushl $concrete_slash
+        pushl $concrete_path
+        call concat_strings
+        popl %eax
+        popl %eax
+        popl %eax
+
         addl $concrete_buffer, %eax
         movl $concrete_buffer, %ebx
+
+        pushl %ebx
+        call test_print_nr
+        popl %ebx
+
+        pushl %eax
+        call test_print_nr
+        popl %eax
 
     concrete_next_entry:
         pushl %eax
@@ -740,11 +777,9 @@ concrete:
         je concrete_skip_entry
 
         # Get the file path
-        pushl $concrete_path_slash_buffer
-        pushl $concrete_slash
-        pushl $concrete_path
-        call concat_strings
-        popl %eax
+        pushl $1024
+        pushl $concrete_path_file_buffer
+        call clear_string
         popl %eax
         popl %eax
 
@@ -788,7 +823,6 @@ concrete:
 
         popl %eax
 
-        pushl %ebx
         lea storage, %edi
 
         pushl 20(%ecx) # st_size (file size)
@@ -797,15 +831,13 @@ concrete:
         popl %eax
         popl %eax
 
-        call test_print
-
-        popl %ebx
-
     concrete_skip_entry:
         popl %eax
 
+
         xorl %ecx, %ecx
         movw 8(%ebx), %cx # d_reclen (entry length)
+        call test_print
         pushl %ecx
         call test_print_nr
         popl %ecx
