@@ -38,7 +38,7 @@
     format_input_concrete: .asciz "%255s"
 
     format_test: .asciz "Test\n"
-    format_test_nr: .asciz "Test %d\n"
+    format_test_nr: .asciz "Test: %d\n"
     format_test_str: .asciz "Test: %s\n"
     format_test_new_line: .asciz "\n"
     format_test_slash_zero: .asciz "/0"
@@ -310,6 +310,10 @@ add:
     movl $0, add_row
     movl 12(%ebp), %eax
 
+    pushl %eax
+    call test_print_nr
+    popl %eax
+
     cmp cols, %eax
     jg add_end
 
@@ -366,8 +370,8 @@ add_no_free_block_next_line_pop:
     pushl 12(%ebp)
     pushl add_row
     call calc_index
-    popl %ebx
-    popl %ebx
+    popl %edx
+    popl %edx
 
     movl %eax, %edx
     decl %edx
@@ -701,20 +705,20 @@ concrete:
         cmp $0, %eax
         jle concrete_end
 
+        addl $concrete_buffer, %eax
         movl $concrete_buffer, %ebx
 
-        movl %eax, %esi
-        addl $concrete_buffer, %esi
-        movl %esi, %edx
-
     concrete_next_entry:
-        pushl %edx
-
-        xorl %ecx, %ecx
-        movw 8(%ebx), %cx # d_reclen (entry length)
-        pushl %ecx
+        pushl %eax
 
         leal 10(%ebx), %ecx  # d_name (entry name)
+
+        pushl %ecx
+        call test_print_str
+        popl %ecx
+        pushl $format_test_new_line
+        call test_print_str
+        popl %edx
 
         # Skip if the file is "." or ".."
         pushl $concrete_null_file_1
@@ -785,7 +789,6 @@ concrete:
         popl %eax
 
         pushl %ebx
-        pushl %edi
         lea storage, %edi
 
         pushl 20(%ecx) # st_size (file size)
@@ -794,19 +797,33 @@ concrete:
         popl %eax
         popl %eax
 
-        popl %edi
+        call test_print
+
         popl %ebx
 
     concrete_skip_entry:
-        popl %ecx
-        popl %edx
+        popl %eax
 
+        xorl %ecx, %ecx
+        movw 8(%ebx), %cx # d_reclen (entry length)
+        pushl %ecx
+        call test_print_nr
+        popl %ecx
         addl %ecx, %ebx
-        cmp %ebx, %edx
+
+        pushl %ebx
+        call test_print_nr
+        popl %ebx
+
+        pushl %eax
+        call test_print_nr
+        popl %eax
+
+        cmp %ebx, %eax
         jge concrete_next_entry
 
 concrete_end:
-    call test_print
+    # call test_print
     popl %ebp
     ret
 
