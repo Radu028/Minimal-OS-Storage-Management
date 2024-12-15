@@ -205,7 +205,6 @@ defragmentation:
     
     defrag_move_file:
         pushl %edx
-        pushl %eax
 
         subl %ecx, %edx
         incl %edx
@@ -223,19 +222,11 @@ defragmentation:
             cmp %ecx, %edx
             jge defrag_move_file_left_loop
 
-        # TODO: Calculeaza iar indecsii care trebuie stersi (s-ar putea sa fie aceeasi problema si la bidimensional)
-        popl %eax
-        decl %eax
-        subl %eax, %edx
-        movl %edx, %ecx
-
         popl %edx
-
-        # Empty the space after the second file
         defrag_move_file_right_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defrag_move_file_right_loop
 
         movl %esi, %ecx
