@@ -47,7 +47,7 @@ add:
 
     # Check if the file descriptor is valid
     movl 8(%ebp), %eax
-    cmpb $0, %al
+    cmpl $0, %eax
     jl add_end
 
     # Check if the file already exists
@@ -55,7 +55,7 @@ add:
     call get
     popl %ecx
 
-    cmpb $0, %al
+    cmpl $0, %eax
     jne add_end
 
     # Find free blocks
@@ -185,20 +185,28 @@ defragmentation:
 
     xorl %ecx, %ecx
 
+    pushl %ecx
+    call find_next_file
+    popl %esi
+
+    cmpl $0, %eax
+    je defrag_end
+
+    cmpl $0, %ecx
+    jg defrag_from_start
+
+
     defrag_loop:
         pushl %ecx
-        call find_next_file
-        popl %ecx
+        call find_next_file # %eax = file id, %ecx = start index, %edx = end index
+        popl %esi
 
         # If there is no first file, end the defragmentation
-        cmp $0, %eax
+        cmpl $0, %eax
         je defrag_end
 
-        # %eax = file id
-        # %ecx = start index
-        # %edx = end index
-        movl %edx, %esi
         incl %edx
+        movl %edx, %esi
 
         pushl %edx
         call find_next_file
@@ -210,22 +218,34 @@ defragmentation:
 
         movl %eax, file_id
 
-        # Calc in %eax difference between end index of first file and start index of second file (number of zeros + 1)
+        # Calc in %eax difference between end index of first file and start index of second file - 1 (number of zeros)
         movl %ecx, %eax
         subl %esi, %eax
 
-        cmp $1, %eax
+        cmp $0, %eax
         je defrag_loop
-    
+
+        jmp defrag_move_file
+
+    defrag_from_start:
+        movl %eax, file_id
+        movl $0, %esi
+
     defrag_move_file:
         pushl %edx
+
+        pushl file_id
+        call test_print_nr
+        popl %ebx
+        pushl %ecx
+        call test_print_nr
+        popl %ecx
 
         subl %ecx, %edx
         incl %edx
         addl %esi, %edx
 
         movl %esi, %ecx
-        incl %ecx
 
         movl file_id, %eax
 
@@ -233,8 +253,11 @@ defragmentation:
         defrag_move_file_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defrag_move_file_left_loop
+
+
+        # call print_storage
 
         popl %edx
         defrag_move_file_right_loop:
