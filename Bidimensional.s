@@ -333,7 +333,7 @@ add:
 
     movl find_file_end_index, %ecx
     cmpl $0, %ecx
-    je add_end
+    jne add_end
 
     # Find free blocks
     xorl %ecx, %ecx
@@ -822,9 +822,22 @@ concrete:
         cmpl $0, %eax
         jl concrete_end_pop
 
-        lea storage, %edi
+        # Get the file dimension
+        movl 20(%ecx), %eax
+        xorl %edx, %edx
+        movl $8192, %ecx
+        divl %ecx
 
-        pushl 20(%ecx) # st_size (file size)
+        cmpl $0, %edx
+        je concrete_skip_add_ceil
+
+        incl %eax
+
+    concrete_skip_add_ceil:
+        # Initialize storage
+        leal storage, %edi
+
+        pushl %eax # st_size (file size)
         pushl %esi # file_id
         call add
         popl %eax
