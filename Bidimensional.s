@@ -279,9 +279,6 @@ concat_strings:
     pushl %ebp
     movl %esp, %ebp
 
-    pushl %ecx
-    pushl %edx
-
     # 8(%ebp) = str1
     # 12(%ebp) = str2
     # 16(%ebp) = result
