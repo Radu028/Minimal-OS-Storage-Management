@@ -800,33 +800,31 @@ concrete:
         xorl %ecx, %ecx
         int $0x80
 
-        # cmpl $0, %eax
-        # jl concrete_end
+        cmpl $0, %eax
+        jl concrete_end_pop
 
-        movl %eax, %esi
+        movl %eax, %edi
 
         movl $255, %ecx
         xorl %edx, %edx
         divl %ecx
         incl %edx
-        pushl %edx
+        movl %edx, %esi
 
     concrete_get_file_dimension:
         # Syscall stat (for file dimension)
         movl $108, %eax
-        movl %esi, %ebx
+        movl %edi, %ebx
         leal concrete_stat_buffer, %ecx
         int $0x80
 
-        # cmp $0, %eax
-        # jl concrete_end
-
-        popl %eax
+        cmpl $0, %eax
+        jl concrete_end_pop
 
         lea storage, %edi
 
         pushl 20(%ecx) # st_size (file size)
-        pushl %eax # file_id
+        pushl %esi # file_id
         call add
         popl %eax
         popl %eax
@@ -853,6 +851,11 @@ concrete:
 
         cmp %ebx, %eax
         jge concrete_next_entry
+
+        jmp concrete_end
+
+concrete_end_pop:
+    popl %eax
 
 concrete_end:
     # call test_print
