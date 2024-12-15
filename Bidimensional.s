@@ -43,9 +43,7 @@
     format_test_new_line: .asciz "\n"
     format_test_slash_zero: .asciz "/0"
 
-    str1: .asciz "ab"
-    str2: .asciz "cd"
-    result: .space 1024
+    test: .long 4
 
 .text
 
@@ -314,9 +312,6 @@ concat_strings:
 concat_strings_end:
     movb $0, (%edi)
 
-    popl %edx
-    popl %ecx
-
     popl %ebp
     ret
 
@@ -329,10 +324,6 @@ add:
 
     movl $0, add_row
     movl 12(%ebp), %eax
-
-    pushl %eax
-    call test_print_nr
-    popl %eax
 
     cmp cols, %eax
     jg add_end
@@ -725,37 +716,26 @@ concrete:
         cmp $0, %eax
         jle concrete_end
 
+        addl $concrete_buffer, %eax
+        movl $concrete_buffer, %ebx
+
+        pushl %eax
+
         # Add slash to the path
         pushl $concrete_path_slash_buffer
         pushl $concrete_slash
         pushl $concrete_path
         call concat_strings
-        popl %eax
-        popl %eax
-        popl %eax
+        popl %ecx
+        popl %ecx
+        popl %ecx
 
-        addl $concrete_buffer, %eax
-        movl $concrete_buffer, %ebx
-
-        pushl %ebx
-        call test_print_nr
-        popl %ebx
-
-        pushl %eax
-        call test_print_nr
         popl %eax
 
     concrete_next_entry:
         pushl %eax
 
         leal 10(%ebx), %ecx  # d_name (entry name)
-
-        pushl %ecx
-        call test_print_str
-        popl %ecx
-        pushl $format_test_new_line
-        call test_print_str
-        popl %edx
 
         # Skip if the file is "." or ".."
         pushl $concrete_null_file_1
@@ -785,6 +765,8 @@ concrete:
 
         leal 10(%ebx), %eax
 
+        pushl %ebx
+
         pushl $concrete_path_file_buffer
         pushl %eax
         pushl $concrete_path_slash_buffer
@@ -793,12 +775,18 @@ concrete:
         popl %eax
         popl %eax
 
+        popl %ebx
+
     concrete_get_file_id:
+        pushl %ebx
+        
         # Syscall open (for file id)
         movl $5, %eax
         leal concrete_path_file_buffer, %ebx
         xorl %ecx, %ecx
         int $0x80
+
+        popl %ebx
 
         cmpl $0, %eax
         jl concrete_end_pop
@@ -812,11 +800,15 @@ concrete:
         movl %edx, %esi
 
     concrete_get_file_dimension:
+        pushl %ebx
+
         # Syscall stat (for file dimension)
         movl $108, %eax
         movl %edi, %ebx
         leal concrete_stat_buffer, %ecx
         int $0x80
+
+        popl %ebx
 
         cmpl $0, %eax
         jl concrete_end_pop
@@ -832,25 +824,12 @@ concrete:
     concrete_skip_entry:
         popl %eax
 
-
         xorl %ecx, %ecx
         movw 8(%ebx), %cx # d_reclen (entry length)
-        call test_print
-        pushl %ecx
-        call test_print_nr
-        popl %ecx
         addl %ecx, %ebx
 
-        pushl %ebx
-        call test_print_nr
-        popl %ebx
-
-        pushl %eax
-        call test_print_nr
-        popl %eax
-
-        cmp %ebx, %eax
-        jge concrete_next_entry
+        cmpl %ebx, %eax
+        jg concrete_next_entry
 
         jmp concrete_end
 
@@ -858,7 +837,6 @@ concrete_end_pop:
     popl %eax
 
 concrete_end:
-    # call test_print
     popl %ebp
     ret
 
