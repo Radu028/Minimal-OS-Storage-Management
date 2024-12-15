@@ -325,11 +325,19 @@ add:
     cmp cols, %eax
     jg add_end
 
-    
+    # Check if the file id already exists
+    movl 8(%ebp), %ecx
+    pushl %ecx
+    call get
+    popl %ecx
+
+    movl find_file_end_index, %ecx
+    cmpl $0, %ecx
+    je add_end
 
     # Find free blocks
     xorl %ecx, %ecx
-    movl %eax, %edx
+    movl 12(%ebp), %edx
 
     # %edx = end index for the current file (for first line)
     decl %edx
