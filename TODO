@@ -1,3 +1,7 @@
 *Unidimensional*:
     *ADD*:
         ✔ De verificat daca exista un fisier cu acelasi descriptor(id) in storage @done(15.12.2024 03:21)
+
+Bidimensional:
+    Defragmentation:
+        ☐ De verificat daca sterge corect indecsii dupa ce a mutat mai la stanga. Mai bine fac un for mai lung si sa fie corect

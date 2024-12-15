@@ -45,6 +45,19 @@ add:
     # File id = 8(%ebp)
     # File dimension in blocks = 12(%ebp)
 
+    # Check if the file descriptor is valid
+    movl 8(%ebp), %eax
+    cmpb $0, %al
+    jl add_end
+
+    # Check if the file already exists
+    pushl %eax
+    call get
+    popl %ecx
+
+    cmpb $0, %al
+    jne add_end
+
     # Find free blocks
     movl 12(%ebp), %edx
 
