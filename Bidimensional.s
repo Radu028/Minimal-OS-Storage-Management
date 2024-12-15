@@ -325,6 +325,8 @@ add:
     cmp cols, %eax
     jg add_end
 
+    
+
     # Find free blocks
     xorl %ecx, %ecx
     movl %eax, %edx
@@ -478,10 +480,12 @@ delete:
     call get
     popl %ebx
 
-    movl find_file_start_index, %ecx
+    movl find_file_end_index, %ecx
 
     cmpl $0, %ecx
     je delete_end
+
+    movl find_file_start_index, %ecx
 
     delete_loop:
         movb $0, (%edi, %ecx, 1)
