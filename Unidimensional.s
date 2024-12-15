@@ -1,3 +1,4 @@
+.section .note.GNU-stack,"",@progbits
 .data
     O: .space 4
     N: .space 4
@@ -13,7 +14,7 @@
     format_start_end_output: .asciz "(%d, %d)\n"
 
     format_test: .asciz "Test\n"
-    format_test_nr: .asciz "Test %d\n"
+    format_test_nr: .asciz "Test: %d\n"
 
 .text
 
@@ -75,21 +76,21 @@ add_no_free_block:
     # Recalculate the start index in %ecx
     movl %edx, %ecx
     incl %ecx
-    subl %eax, %ecx
+    subl 12(%ebp), %ecx
 
     jmp add_find_free_space_loop
 
 add_found_space_for_this_file:
     # Calculate again the start index in %ecx
-    subl %eax, %ecx
+    subl 12(%ebp), %ecx
 
     movl 8(%ebp), %eax
 
-    add_complete_storage_array_with_file_id:
+    add_fill_storage_array_with_file_id:
         movb %al, (%edi, %ecx, 1)
         incl %ecx
         cmp %ecx, %edx
-    jge add_complete_storage_array_with_file_id
+    jge add_fill_storage_array_with_file_id
 
     jmp add_end
 
@@ -170,79 +171,77 @@ defragmentation:
 
     xorl %ecx, %ecx
 
-defrag_loop:
-    pushl %ecx
-    call find_next_file
-    popl %ebx
+    defrag_loop:
+        pushl %ecx
+        call find_next_file
+        popl %ecx
 
-    # If there is no first file, end the defragmentation
-    cmp $0, %eax
-    je defrag_end
+        # If there is no first file, end the defragmentation
+        cmp $0, %eax
+        je defrag_end
 
-    # %eax = file id
-    # %ecx = start index
-    # %edx = end index
-    pushl %edx
-    incl %edx
+        # %eax = file id
+        # %ecx = start index
+        # %edx = end index
+        movl %edx, %esi
+        incl %edx
 
-    pushl %edx
-    call find_next_file
-    popl %ebx
+        pushl %edx
+        call find_next_file
+        popl %ebx
 
-    # If there is no second file, end the defragmentation with a pop
-    cmp $0, %eax
-    je defrag_end_pop
+        # If there is no second file, end the defragmentation
+        cmp $0, %eax
+        je defrag_end
 
-    movl %eax, file_id
+        movl %eax, file_id
 
-    # %ebx = end index of second file
-    movl %edx, %ebx
+        # Calc in %eax difference between end index of first file and start index of second file (number of zeros + 1)
+        movl %ecx, %eax
+        subl %esi, %eax
 
-    # %edx = end index of first file, %ecx = start index of second file
-    popl %edx
-    movl %ecx, %eax
-    subl %edx, %eax
-    # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
-
-    cmp $1, %eax
-    je defrag_loop
+        cmp $1, %eax
+        je defrag_loop
     
-defrag_move_file:
-    # Interchange %ecx and %edx
-    xorl %ecx, %edx
-    xorl %edx, %ecx
-    xorl %ecx, %edx
+    defrag_move_file:
+        pushl %edx
+        pushl %eax
 
-    incl %ecx
+        subl %ecx, %edx
+        incl %edx
+        addl %esi, %edx
 
-    pushl %eax
-    movl file_id, %eax
-
-    # Fill the space between the two files with second file's id
-    defrag_move_file_left_loop:
-        movb %al, (%edi, %ecx, 1)
+        movl %esi, %ecx
         incl %ecx
-        cmp %ecx, %edx
-        jne defrag_move_file_left_loop
 
-    popl %eax
+        movl file_id, %eax
 
-    movl %ebx, %edx
-    movl %ebx, %ecx
-    subl %eax, %ecx
-    addl $2, %ecx
+        # Fill the space between the two files with second file's id
+        defrag_move_file_left_loop:
+            movb %al, (%edi, %ecx, 1)
+            incl %ecx
+            cmp %ecx, %edx
+            jge defrag_move_file_left_loop
 
-    # Empty the space after the second file
-    defrag_move_file_right_loop:
-        movb $0, (%edi, %ecx, 1)
+        # TODO: Calculeaza iar indecsii care trebuie stersi (s-ar putea sa fie aceeasi problema si la bidimensional)
+        popl %eax
+        decl %eax
+        subl %eax, %edx
+        movl %edx, %ecx
+
+        popl %edx
+
+        # Empty the space after the second file
+        defrag_move_file_right_loop:
+            movb $0, (%edi, %ecx, 1)
+            incl %ecx
+            cmp %ecx, %edx
+            jge defrag_move_file_right_loop
+
+        movl %esi, %ecx
         incl %ecx
-        cmp %ecx, %edx
-        jge defrag_move_file_right_loop
 
-    jmp defrag_loop
-
-defrag_end_pop:
-    popl %ebx
+        jmp defrag_loop
 
 defrag_end:
     ret
@@ -270,21 +269,22 @@ find_next_file:
 
     find_next_file_start_index:
         cmp storage_size, %ecx
-        je find_next_file_null
+        jge find_next_file_null
 
         movb (%edi, %ecx, 1), %al
         incl %ecx
-        cmp $0, %al
+        cmpb $0, %al
         je find_next_file_start_index
 
     end_search_start_index:
         # Push the start index
         pushl %ecx
+        xorl %edx, %edx
 
     find_file_end_index:
         movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp %al, %dl
+        cmpb %al, %dl
         je find_file_end_index
 
     end_search_end_index:
@@ -467,3 +467,54 @@ et_exit:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
+
+
+
+test_print:
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+    pushl %esi
+    pushl %edi
+
+    pushl $format_test
+    call printf
+    popl %ebx
+
+    popl %edi
+    popl %esi
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    ret
+
+test_print_nr:
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+    pushl %esi
+    pushl %edi
+
+    movl 8(%ebp), %eax
+    pushl %eax
+    pushl $format_test_nr
+    call printf
+    popl %ebx
+    popl %ebx
+
+    popl %edi
+    popl %esi
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    popl %ebp
+    ret
