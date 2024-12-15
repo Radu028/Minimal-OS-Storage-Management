@@ -49,7 +49,7 @@
 
 .global main
 
-convert_blocks_to_add:
+get_blocks_needed:
     pushl %ebp
     movl %esp, %ebp
 
@@ -61,11 +61,11 @@ convert_blocks_to_add:
     divl %ecx
 
     cmpl $0, %edx
-    je convert_blocks_to_add_end
+    je get_blocks_needed_end
 
     incl %eax
 
-convert_blocks_to_add_end:
+get_blocks_needed_end:
     popl %ebp
     ret
 
@@ -917,7 +917,7 @@ et_add:
         popl %ebx
 
         pushl file_dimension
-        call convert_blocks_to_add
+        call get_blocks_needed
         popl %ebx
 
         pushl %eax

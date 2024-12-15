@@ -19,29 +19,34 @@
 
 .global main
 
+get_blocks_needed:
+    pushl %ebp
+    movl %esp, %ebp
+
+    movl 8(%ebp), %eax
+    xorl %edx, %edx
+    movl $8, %ecx
+    divl %ecx
+
+    cmpl $0, %edx
+    je get_blocks_needed_skip_ceil
+
+    incl %eax
+
+get_blocks_needed_skip_ceil:
+    popl %ebp
+    ret
+
 add:
     pushl %ebp
     movl %esp, %ebp
 
     # File id = 8(%ebp)
-    # File dimension = 12(%ebp)
+    # File dimension in blocks = 12(%ebp)
 
-    # Calculate the blocks needed in %eax
-    movl 12(%ebp), %eax
-    xorl %edx, %edx
-    movl $8, %ecx
-    divl %ecx
-    
-    # Ceil for %eax if it is the case, if not skip
-    cmp $0, %edx
-    je add_skip_ceil
-
-    incl %eax
-
-add_skip_ceil:
     # Find free blocks
     xorl %ecx, %ecx
-    movl %eax, %edx
+    movl 12(%ebp), %edx
 
     # %edx = end index for the current file
     decl %edx
@@ -49,14 +54,10 @@ add_skip_ceil:
     jge add_end
 
 add_find_free_space_loop:
-    pushl %eax
-
     xorl %eax, %eax
     movb (%edi, %ecx, 1), %al
     cmp $0, %eax
-    jne add_no_free_block_pop
-
-    popl %eax
+    jne add_no_free_block
 
     incl %ecx
     cmp %ecx, %edx
@@ -64,9 +65,6 @@ add_find_free_space_loop:
 
     jmp add_found_space_for_this_file
 
-add_no_free_block_pop:
-    popl %eax
-    
 add_no_free_block:
     incl %edx
 
@@ -389,6 +387,10 @@ et_add:
         popl %ebx
 
         pushl file_dimension
+        call get_blocks_needed
+        popl %ebx
+
+        pushl %eax
         pushl file_id
         call add
         popl %ebx
