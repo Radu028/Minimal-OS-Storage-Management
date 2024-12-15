@@ -46,7 +46,6 @@ add:
     # File dimension in blocks = 12(%ebp)
 
     # Find free blocks
-    xorl %ecx, %ecx
     movl 12(%ebp), %edx
 
     # %edx = end index for the current file
@@ -54,10 +53,12 @@ add:
     cmp storage_size, %edx
     jge add_end
 
-add_find_free_space_loop:
+    xorl %ecx, %ecx
     xorl %eax, %eax
+
+add_find_free_space_loop:
     movb (%edi, %ecx, 1), %al
-    cmp $0, %eax
+    cmpb $0, %al
     jne add_no_free_block
 
     incl %ecx
@@ -267,20 +268,18 @@ find_next_file:
         cmpb $0, %al
         je find_next_file_start_index
 
-    end_search_start_index:
-        # Push the start index
-        pushl %ecx
-        xorl %edx, %edx
+    # Push the start index
+    pushl %ecx
 
     find_file_end_index:
-        movb (%edi, %ecx, 1), %dl
+        movb (%edi, %ecx, 1), %ah
         incl %ecx
-        cmpb %al, %dl
+        cmpb %al, %ah
         je find_file_end_index
 
-    end_search_end_index:
-        subl $2, %ecx
-        movl %ecx, %edx
+    movb $0, %ah
+    subl $2, %ecx
+    movl %ecx, %edx
 
     popl %ecx
     decl %ecx
