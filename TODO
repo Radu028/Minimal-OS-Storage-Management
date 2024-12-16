@@ -5,3 +5,4 @@
 Bidimensional:
     Defragmentation:
         ☐ De verificat daca sterge corect indecsii dupa ce a mutat mai la stanga. Mai bine fac un for mai lung si sa fie corect
+        ☐ De verificat daca primul fisier incepe de la indexul 0, daca nu muta la stanga
