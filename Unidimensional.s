@@ -128,22 +128,23 @@ get:
 
         movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp file_id, %dl
+        cmpb %al, %dl
         jne get_search_start_index
 
     # %eax = start index
-    movl %ecx, %eax
-    decl %eax
+    movl %ecx, %esi
+    decl %esi
 
     get_seach_end_index:
         movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp file_id, %dl
+        cmpb %al, %dl
         je get_seach_end_index
 
     # %edx = end index
     subl $2, %ecx
     movl %ecx, %edx
+    movl %esi, %eax
 
     jmp get_end
 
@@ -425,16 +426,21 @@ et_add:
         call get_blocks_needed
         popl %ebx
 
+        # Skip adding file if the dimension is not 2 blocks at least
+        cmpl $2, %eax
+        jl et_add_skip
+
         pushl %eax
         pushl file_id
         call add
         popl %ebx
         popl %ebx
-
+    
+    et_add_skip:
         decl N
         movl N, %ecx
 
-        cmp $0, %ecx
+        cmpl $0, %ecx
         jne et_add_loop
 
 
