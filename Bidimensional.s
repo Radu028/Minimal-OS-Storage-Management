@@ -834,6 +834,9 @@ concrete:
         incl %eax
 
     concrete_skip_add_ceil:
+        cmpl $2, %eax
+        jl concrete_skip_entry
+
         # Initialize storage
         leal storage, %edi
 
@@ -920,12 +923,16 @@ et_add:
         call get_blocks_needed
         popl %ebx
 
+        cmpl $2, %eax
+        jl et_add_skip
+
         pushl %eax
         pushl file_id
         call add
         popl %ebx
         popl %ebx
 
+    et_add_skip:
         decl N
         movl N, %ecx
 

@@ -1,8 +1,10 @@
-*Unidimensional*:
-    *ADD*:
+Unidimensional:
+    Add:
         ✔ De verificat daca exista un fisier cu acelasi descriptor(id) in storage @done(15.12.2024 03:21)
 
 Bidimensional:
+    Add:
+        ☐ De verificat daca fisierul are cel putin 2 blockuri inainte de a da add file
     Defragmentation:
         ☐ De verificat daca sterge corect indecsii dupa ce a mutat mai la stanga. Mai bine fac un for mai lung si sa fie corect
         ☐ De verificat daca primul fisier incepe de la indexul 0, daca nu muta la stanga
