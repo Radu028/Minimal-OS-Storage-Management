@@ -569,6 +569,38 @@ defragmentation:
     pushl %esi
 
     xorl %ecx, %ecx
+    pushl %ecx
+    call find_next_file
+    popl %ecx
+
+    # Check if there is at least one file
+    movb find_file_id, %al
+    cmpb $0, %al
+    je defragmentation_end
+
+    # Check if the file starts from the first index
+    movl find_file_start_index, %edx
+    cmpl $0, %edx
+    je defragmentation_loop
+
+    # Move the file to the first index
+    movl find_file_end_index, %edx
+    subl find_file_start_index, %edx
+
+    defragmentation_from_start_fill_loop:
+        movb %al, (%edi, %ecx, 1)
+        incl %ecx
+        cmpl %ecx, %edx
+        jge defragmentation_from_start_fill_loop
+
+    movl find_file_end_index, %edx
+    defragmentation_from_start_empty_loop:
+        movb $0, (%edi, %ecx, 1)
+        incl %ecx
+        cmpl %ecx, %edx
+        jge defragmentation_from_start_empty_loop
+
+    xorl %ecx, %ecx
     defragmentation_loop:
         pushl %ecx
         call find_next_file
