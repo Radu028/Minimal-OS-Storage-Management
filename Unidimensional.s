@@ -64,7 +64,7 @@ add:
     # %edx = end index for the current file
     decl %edx
     cmp storage_size, %edx
-    jge add_end
+    jge add_no_space_for_file
 
     xorl %ecx, %ecx
     xorl %eax, %eax
@@ -85,7 +85,7 @@ add_no_free_block:
 
     cmp storage_size, %edx
     # No free space for this file
-    je add_end
+    je add_no_space_for_file
 
     # Recalculate the start index in %ecx
     movl %edx, %ecx
@@ -97,7 +97,6 @@ add_no_free_block:
 add_found_space_for_this_file:
     # Calculate again the start index in %ecx
     subl 12(%ebp), %ecx
-
     movl 8(%ebp), %eax
 
     add_fill_storage_array_with_file_id:
@@ -106,7 +105,35 @@ add_found_space_for_this_file:
         cmp %ecx, %edx
     jge add_fill_storage_array_with_file_id
 
+    subl 12(%ebp), %ecx
+
+    # Print the file id and the start and end index
+    pushl %edx
+    pushl %ecx
+    pushl %eax
+    pushl $format_id_start_end_output
+    call printf
+    popl %eax
+    popl %eax
+    popl %ecx
+    popl %edx
+
     jmp add_end
+
+add_no_space_for_file:
+    # No space for this file so print "fileId: (0, 0)"
+    movl 8(%ebp), %eax
+    xorl %ecx, %ecx
+
+    pushl %ecx
+    pushl %ecx
+    pushl %eax
+    pushl $format_id_start_end_output
+    call printf
+    popl %eax
+    popl %eax
+    popl %ecx
+    popl %ecx
 
 add_end:
     popl %ebp
@@ -443,8 +470,6 @@ et_add:
         cmpl $0, %ecx
         jne et_add_loop
 
-
-    call print_storage
 
     jmp et_decl_O
 

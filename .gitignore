@@ -1,8 +1,10 @@
+Checker/
+Inputs/
+Concrete/
 input.txt
 input1.txt
 input2.txt
 uni
 bi
-test/
 run
 x86_machine.yaml
