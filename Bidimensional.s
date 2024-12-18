@@ -39,6 +39,7 @@
 
     format_test: .asciz "Test\n"
     format_test_nr: .asciz "Test: %d\n"
+    format_test_nr_2: .asciz "Test2: %d\n"
     format_test_str: .asciz "Test: %s\n"
     format_test_new_line: .asciz "\n"
     format_test_slash_zero: .asciz "/0"
@@ -106,16 +107,13 @@ calc_position:
     ret
 
 init_storage:
-    movl rows, %eax
-    mull cols
-    decl %eax
     xorl %ecx, %ecx
 
     init_storage_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
-        cmp %eax, %ecx
-        jle init_storage_loop
+        cmp storage_size, %ecx
+        jl init_storage_loop
 
     ret
 
@@ -347,7 +345,7 @@ add:
     xorl %eax, %eax
 add_find_free_space_loop:
     movb (%edi, %ecx, 1), %al
-    cmp $0, %al
+    cmpb $0, %al
     jne add_no_free_block
 
     incl %ecx
@@ -368,8 +366,8 @@ add_no_free_block:
 
     cmp $0, %edx
     je add_no_free_block_next_line_pop
-
     popl %edx
+
     # Recalculate the start index in %ecx
     movl %edx, %ecx
     incl %ecx
@@ -393,7 +391,16 @@ add_no_free_block_next_line_pop:
 
     movl %eax, %edx
     decl %edx
+    pushl %edx
 
+    xorl %edx, %edx
+    movl cols, %ecx
+    movl add_row, %eax
+    mull %ecx
+    movl %eax, %ecx
+    popl %edx
+
+    xorl %eax, %eax
     jmp add_find_free_space_loop
 
 add_found_space_for_this_file:
@@ -402,7 +409,6 @@ add_found_space_for_this_file:
 
     # Write the file in the storage
     movb 8(%ebp), %al
-
     add_found_space_for_this_file_loop:
         movb %al, (%edi, %ecx, 1)
         incl %ecx
@@ -1115,6 +1121,34 @@ test_print_nr:
     movl 8(%ebp), %eax
     pushl %eax
     pushl $format_test_nr
+    call printf
+    popl %ebx
+    popl %ebx
+
+    popl %edi
+    popl %esi
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+
+    popl %ebp
+    ret
+
+test_print_nr_2:
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+    pushl %esi
+    pushl %edi
+
+    movl 8(%ebp), %eax
+    pushl %eax
+    pushl $format_test_nr_2
     call printf
     popl %ebx
     popl %ebx
