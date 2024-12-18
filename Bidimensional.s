@@ -718,8 +718,8 @@ defragmentation:
         movl %eax, %ecx
         movl find_file_col_start, %eax
 
-        cmp $0, %eax
-        je defragmentation_loop_continue
+        cmpl $0, %eax
+        je defragmentation_loop
 
         xorl %edx, %edx
         movl find_file_row_start, %eax
@@ -731,6 +731,7 @@ defragmentation:
         addl %eax, %edx # %edx = end index of the second file's new position
 
         movl %eax, %ecx
+        xorl %eax, %eax
         movb find_file_id, %al
         pushl %ecx
 
@@ -740,9 +741,7 @@ defragmentation:
             cmp %ecx, %edx
             jge defragmentation_next_row_check_next_row_left_loop
 
-        movl find_file_start_index, %ecx
         movl find_file_end_index, %edx
-
         defragmentation_next_row_check_next_row_empty_space_after_second_file_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
@@ -751,9 +750,6 @@ defragmentation:
 
         popl %ecx
         jmp defragmentation_loop
-
-    defragmentation_loop_continue:
-        incl %ecx
 
 defragmentation_end:
     popl %esi
