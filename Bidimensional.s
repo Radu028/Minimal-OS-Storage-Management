@@ -28,7 +28,7 @@
     concrete_null_file_2: .asciz ".."
 
     storage: .space 1048576
-    storage_size: .long 1048576
+    storage_size: .space 4
     rows: .long 1024
     cols: .long 1024
 
@@ -323,7 +323,7 @@ add:
     movl 12(%ebp), %eax
 
     cmp cols, %eax
-    jg add_end
+    jg add_no_space_for_file
 
     # Check if the file id already exists
     movl 8(%ebp), %ecx
@@ -342,7 +342,7 @@ add:
     # %edx = end index for the current file (for first line)
     decl %edx
     cmp storage_size, %edx
-    jge add_end
+    jge add_no_space_for_file
 
     xorl %eax, %eax
 add_find_free_space_loop:
@@ -382,7 +382,7 @@ add_no_free_block_next_line_pop:
     incl add_row
     movl add_row, %edx
     cmp rows, %edx
-    jge add_end
+    jge add_no_space_for_file
 
     # Recalculate the end index in %edx
     pushl 12(%ebp)
@@ -408,6 +408,59 @@ add_found_space_for_this_file:
         incl %ecx
         cmp %ecx, %edx
         jge add_found_space_for_this_file_loop
+
+    subl 12(%ebp), %ecx
+
+    pushl %edx
+
+    pushl %ecx
+    call calc_position
+    popl %ecx
+
+    movl %eax, %ecx
+    movl %edx, %esi
+
+    popl %edx
+    pushl %esi
+
+    pushl %edx
+    call calc_position
+    popl %esi
+
+    popl %esi
+
+    pushl %edx
+    pushl %eax
+    pushl %esi
+    pushl %eax
+    pushl 8(%ebp)
+    pushl $format_id_start_end_output
+    call printf
+    popl %eax
+    popl %eax
+    popl %eax
+    popl %eax
+    popl %eax
+    popl %eax
+    
+    jmp add_end
+
+add_no_space_for_file:
+    xorl %eax, %eax
+
+    pushl %eax
+    pushl %eax
+    pushl %eax
+    pushl %eax
+    pushl 8(%ebp)
+    pushl $format_id_start_end_output
+    call printf
+    popl %eax
+    popl %eax
+    popl %eax
+    popl %eax
+    popl %eax
+    popl %eax
 
 add_end:
     popl %ebp
@@ -869,6 +922,13 @@ main:
     lea storage, %edi
     call init_storage
 
+    # Calculate storage index
+    movl rows, %eax
+    movl cols, %ebx
+    xorl %edx, %edx
+    mull %ebx
+    movl %eax, storage_size
+
     pushl $O
     pushl $format_input
     call scanf
@@ -938,9 +998,6 @@ et_add:
 
         cmp $0, %ecx
         jne et_add_loop
-
-
-    call print_storage
 
     jmp et_decl_O
 
