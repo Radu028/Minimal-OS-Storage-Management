@@ -653,26 +653,24 @@ defragmentation:
 
         movb find_file_id, %al
         incl %ecx
-        pushl %ecx
 
         # Fill the space between the two files with second file's id
         defragmentation_move_file_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_move_file_left_loop
 
-        movl find_file_start_index, %ecx
         movl find_file_end_index, %edx
-
         # Empty the space after the second file
         defragmentation_move_file_right_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_move_file_right_loop
 
-        popl %ecx
+        movl %esi, %ecx
+        incl %ecx
         jmp defragmentation_loop
 
     defragmentation_next_row:
