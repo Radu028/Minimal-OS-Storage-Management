@@ -653,6 +653,7 @@ defragmentation:
 
         movb find_file_id, %al
         incl %ecx
+        pushl %ecx
 
         # Fill the space between the two files with second file's id
         defragmentation_move_file_left_loop:
@@ -669,8 +670,7 @@ defragmentation:
             cmpl %ecx, %edx
             jge defragmentation_move_file_right_loop
 
-        movl %esi, %ecx
-        incl %ecx
+        popl %ecx
         jmp defragmentation_loop
 
     defragmentation_next_row:
@@ -684,7 +684,7 @@ defragmentation:
         movl cols, %edx
         subl %eax, %edx # %edx = number of columns free in the current row
 
-        cmp %ecx, %edx
+        cmpl %ecx, %edx
         jl defragmentation_next_row_check_next_row
 
         # Move the second file to the current row
@@ -704,9 +704,7 @@ defragmentation:
             cmp %ecx, %edx
             jge defragmentation_next_row_move_file_to_current_row_loop
 
-        movl find_file_start_index, %ecx
         movl find_file_end_index, %edx
-
         defragmentation_next_row_empty_space_after_second_file_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
