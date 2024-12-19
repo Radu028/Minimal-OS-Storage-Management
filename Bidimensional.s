@@ -679,16 +679,16 @@ defragmentation:
         subl find_file_start_index, %ecx
         incl %ecx
 
-        movl find_file_col_end, %eax
-        incl %eax
-        movl cols, %edx
-        subl %eax, %edx # %edx = number of columns free in the current row
+        pushl %esi
+        call calc_position # %eax = row index of the first file, %edx = column index of the first file
+        popl %esi
 
-        cmpl %ecx, %edx
-        jl defragmentation_next_row_check_next_row
+        incl %edx
+        addl %ecx, %edx # %edx = Sum of both files' sizes
+        cmpl cols, %edx
+        jg defragmentation_next_row_check_next_row
 
         # Move the second file to the current row
-        
         movl %ecx, %edx # %edx = Second file's size
         movl %esi, %ecx # %ecx = First file's end index
         addl %esi, %edx # %edx = End index of the second file's new position
@@ -715,7 +715,7 @@ defragmentation:
         jmp defragmentation_loop
 
     defragmentation_next_row_check_next_row:
-        movl %eax, %ecx
+        movl find_file_start_index, %ecx
         movl find_file_col_start, %eax
 
         cmpl $0, %eax
