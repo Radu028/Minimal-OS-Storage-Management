@@ -674,9 +674,7 @@ defragmentation:
         jmp defragmentation_loop
 
     defragmentation_next_row:
-        # Calculate second file's size in %ecx
-        movl find_file_end_index, %ecx
-        subl find_file_start_index, %ecx
+        movl find_file_col_end, %ecx
         incl %ecx
 
         pushl %esi
