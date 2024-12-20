@@ -4,7 +4,9 @@ Unidimensional:
 
 Bidimensional:
     Add:
-        ☐ De verificat daca fisierul are cel putin 2 blockuri inainte de a da add file
+        ✔ De verificat daca fisierul are cel putin 2 blockuri inainte de a da add file @done(20.12.2024 22:46)
     Defragmentation:
-        ☐ De verificat daca sterge corect indecsii dupa ce a mutat mai la stanga. Mai bine fac un for mai lung si sa fie corect
-        ☐ De verificat daca primul fisier incepe de la indexul 0, daca nu muta la stanga
+        ✔ De verificat daca sterge corect indecsii dupa ce a mutat mai la stanga. Mai bine fac un for mai lung si sa fie corect @done(20.12.2024 22:46)
+        ✔ De verificat daca primul fisier incepe de la indexul 0, daca nu muta la stanga @done(20.12.2024 22:46)
+    Concrete:
+        ☐ De inchis fisierele la finalul loop ului
