@@ -378,12 +378,9 @@ print_storage:
         cmpl $0, %eax
         je print_storage_end
 
-        # %eax = file id
-        # %ecx = start index
-        # %edx = end index
-        pushl %edx
-        pushl %ecx
-        pushl %eax
+        pushl %edx # end index
+        pushl %ecx # start index
+        pushl %eax # file id
         pushl $format_id_start_end_output
         call printf
         popl %ebx
