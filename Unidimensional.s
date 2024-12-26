@@ -63,7 +63,7 @@ add:
 
     # %edx = end index for the current file
     decl %edx
-    cmp storage_size, %edx
+    cmpl storage_size, %edx
     jge add_no_space_for_file
 
     xorl %ecx, %ecx
@@ -75,7 +75,7 @@ add_find_free_space_loop:
     jne add_no_free_block
 
     incl %ecx
-    cmp %ecx, %edx
+    cmpl %ecx, %edx
     jge add_find_free_space_loop
 
     jmp add_found_space_for_this_file
@@ -83,7 +83,7 @@ add_find_free_space_loop:
 add_no_free_block:
     incl %edx
 
-    cmp storage_size, %edx
+    cmpl storage_size, %edx
     # No free space for this file
     je add_no_space_for_file
 
@@ -102,7 +102,7 @@ add_found_space_for_this_file:
     add_fill_storage_array_with_file_id:
         movb %al, (%edi, %ecx, 1)
         incl %ecx
-        cmp %ecx, %edx
+        cmpl %ecx, %edx
     jge add_fill_storage_array_with_file_id
 
     subl 12(%ebp), %ecx
@@ -150,7 +150,7 @@ get:
     xorl %edx, %edx
 
     get_search_start_index:
-        cmp storage_size, %ecx
+        cmpl storage_size, %ecx
         je get_null
 
         movb (%edi, %ecx, 1), %dl
@@ -202,7 +202,7 @@ delete:
     delete_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
-        cmp %ecx, %edx
+        cmpl %ecx, %edx
         jge delete_loop
 
 delete_end:
@@ -265,7 +265,7 @@ defragmentation:
         popl %ebx
 
         # If there is no second file, end the defragmentation
-        cmp $0, %eax
+        cmpl $0, %eax
         je defrag_end
 
         movl %eax, file_id
@@ -318,7 +318,7 @@ init_storage:
         movb $0, (%edi, %ecx, 1)
 
         incl %ecx
-        cmp storage_size, %ecx
+        cmpl storage_size, %ecx
         jne init_storage_loop
 
     ret
@@ -333,7 +333,7 @@ find_next_file:
     xorl %eax, %eax
 
     find_next_file_start_index:
-        cmp storage_size, %ecx
+        cmpl storage_size, %ecx
         jge find_next_file_null
 
         movb (%edi, %ecx, 1), %al
@@ -375,7 +375,7 @@ print_storage:
         call find_next_file
         popl %ebx
 
-        cmp $0, %eax
+        cmpl $0, %eax
         je print_storage_end
 
         # %eax = file id
@@ -417,16 +417,16 @@ et_do_action:
 
     movl action_id, %eax
 
-    cmp $1, %eax
+    cmpb $1, %al
     je et_add
 
-    cmp $2, %eax
+    cmpb $2, %al
     je et_get
 
-    cmp $3, %eax
+    cmpb $3, %al
     je et_delete
 
-    cmp $4, %eax
+    cmpb $4, %al
     je et_defrag
 
 et_add:
@@ -521,7 +521,7 @@ et_decl_O:
     decl O
     movl O, %eax
 
-    cmp $0, %eax
+    cmpl $0, %eax
     je et_exit
     jne et_do_action
 

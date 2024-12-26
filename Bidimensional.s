@@ -112,7 +112,7 @@ init_storage:
     init_storage_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
-        cmp storage_size, %ecx
+        cmpl storage_size, %ecx
         jl init_storage_loop
 
     ret
@@ -133,12 +133,12 @@ find_next_file:
     movl 8(%ebp), %ecx
 
     find_next_file_start_index:
-        cmp storage_size, %ecx
+        cmpl storage_size, %ecx
         je find_next_file_end
 
         movb (%edi, %ecx, 1), %al
         incl %ecx
-        cmp $0, %al
+        cmpb $0, %al
         je find_next_file_start_index
 
     end_search_start_index:
@@ -159,7 +159,7 @@ find_next_file:
     find_file_end_index_tag:
         movb (%edi, %ecx, 1), %al
         incl %ecx
-        cmp find_file_id, %al
+        cmpb find_file_id, %al
         je find_file_end_index_tag
 
     end_search_end_index:
@@ -185,7 +185,7 @@ print_storage:
         popl %ebx
 
         movb find_file_id, %al
-        cmp $0, %al
+        cmpb $0, %al
         je print_storage_end
 
         pushl find_file_col_end
@@ -320,7 +320,7 @@ add:
     movl $0, add_row
     movl 12(%ebp), %eax
 
-    cmp cols, %eax
+    cmpl cols, %eax
     jg add_no_space_for_file
 
     # Check if the file id already exists
@@ -339,7 +339,7 @@ add:
 
     # %edx = end index for the current file (for first line)
     decl %edx
-    cmp storage_size, %edx
+    cmpl storage_size, %edx
     jge add_no_space_for_file
 
     xorl %eax, %eax
@@ -349,7 +349,7 @@ add_find_free_space_loop:
     jne add_no_free_block
 
     incl %ecx
-    cmp %ecx, %edx
+    cmpl %ecx, %edx
     jge add_find_free_space_loop
 
     jmp add_found_space_for_this_file
@@ -364,7 +364,7 @@ add_no_free_block:
     movl cols, %ecx
     divl %ecx
 
-    cmp $0, %edx
+    cmpl $0, %edx
     je add_no_free_block_next_line_pop
     popl %edx
 
@@ -379,7 +379,7 @@ add_no_free_block_next_line_pop:
 
     incl add_row
     movl add_row, %edx
-    cmp rows, %edx
+    cmpl rows, %edx
     jge add_no_space_for_file
 
     # Recalculate the end index in %edx
@@ -412,7 +412,7 @@ add_found_space_for_this_file:
     add_found_space_for_this_file_loop:
         movb %al, (%edi, %ecx, 1)
         incl %ecx
-        cmp %ecx, %edx
+        cmpl %ecx, %edx
         jge add_found_space_for_this_file_loop
 
     subl 12(%ebp), %ecx
@@ -492,12 +492,12 @@ get:
     xorl %edx, %edx
 
     get_find_file_start_index:
-        cmp storage_size, %ecx
+        cmpl storage_size, %ecx
         je get_end
 
         movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp %al, %dl
+        cmpb %al, %dl
         jne get_find_file_start_index
 
     get_end_search_start_index:
@@ -517,7 +517,7 @@ get:
     get_find_file_end_index:
         movb (%edi, %ecx, 1), %dl
         incl %ecx
-        cmp %al, %dl
+        cmpb %al, %dl
         je get_find_file_end_index
 
     get_end_search_end_index:
@@ -557,7 +557,7 @@ delete:
     delete_loop:
         movb $0, (%edi, %ecx, 1)
         incl %ecx
-        cmp find_file_end_index, %ecx
+        cmpl find_file_end_index, %ecx
         jle delete_loop
 
 delete_end:
@@ -631,7 +631,7 @@ defragmentation:
         movl find_file_start_index, %eax
         subl %esi, %eax # %eax = difference between end index of first file and start index of second file (number of zeros + 1)
 
-        cmp $1, %eax
+        cmpl $1, %eax
         je defragmentation_loop
         
         # Check if the second file is on the same row and can be moved a few columns to the left
@@ -640,7 +640,7 @@ defragmentation:
         # OR
         # Check if it is on the next row and cannot be moved to the current row, but can be moved a few columns to the left
 
-        cmp find_file_row_start, %ebx
+        cmpl find_file_row_start, %ebx
         je defragmentation_same_row
         jl defragmentation_next_row
 
@@ -703,14 +703,14 @@ defragmentation:
         defragmentation_next_row_move_file_to_current_row_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_next_row_move_file_to_current_row_loop
 
         movl find_file_end_index, %edx
         defragmentation_next_row_empty_space_after_second_file_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_next_row_empty_space_after_second_file_loop
 
         popl %ecx
@@ -741,14 +741,14 @@ defragmentation:
         defragmentation_multiple_rows_move_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_multiple_rows_move_left_loop
 
         movl find_file_end_index, %edx
         defragmentation_multiple_rows_empty_space_after_second_file_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_multiple_rows_empty_space_after_second_file_loop
 
         popl %ecx
@@ -777,14 +777,14 @@ defragmentation:
         defragmentation_next_row_check_next_row_left_loop:
             movb %al, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_next_row_check_next_row_left_loop
 
         movl find_file_end_index, %edx
         defragmentation_next_row_check_next_row_empty_space_after_second_file_loop:
             movb $0, (%edi, %ecx, 1)
             incl %ecx
-            cmp %ecx, %edx
+            cmpl %ecx, %edx
             jge defragmentation_next_row_check_next_row_empty_space_after_second_file_loop
 
         movl %esi, %ecx
@@ -822,7 +822,7 @@ concrete:
         movl $4096, %edx
         int $0x80
 
-        cmp $0, %eax
+        cmpl $0, %eax
         jle concrete_end
 
         addl $concrete_buffer, %eax
@@ -853,7 +853,7 @@ concrete:
         popl %ecx
         popl %edx
 
-        cmp $0, %eax
+        cmpl $0, %eax
         je concrete_skip_entry
 
         pushl $concrete_null_file_2
@@ -862,7 +862,7 @@ concrete:
         popl %ecx
         popl %edx
 
-        cmp $0, %eax
+        cmpl $0, %eax
         je concrete_skip_entry
 
         # Get the file path
@@ -1003,19 +1003,19 @@ et_do_action:
 
     movl action_id, %eax
 
-    cmp $1, %eax
+    cmpb $1, %al
     je et_add
 
-    cmp $2, %eax
+    cmpb $2, %al
     je et_get
 
-    cmp $3, %eax
+    cmpb $3, %al
     je et_delete
 
-    cmp $4, %eax
+    cmpb $4, %al
     je et_defrag
 
-    cmp $5, %eax
+    cmpb $5, %al
     je et_concrete
 
 et_add:
@@ -1055,7 +1055,7 @@ et_add:
         decl N
         movl N, %ecx
 
-        cmp $0, %ecx
+        cmpl $0, %ecx
         jne et_add_loop
 
     jmp et_decl_O
@@ -1126,7 +1126,7 @@ et_decl_O:
     decl O
     movl O, %eax
 
-    cmp $0, %eax
+    cmpl $0, %eax
     je et_exit
     jne et_do_action
 
