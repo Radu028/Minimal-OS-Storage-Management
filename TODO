@@ -9,4 +9,6 @@ Bidimensional:
         ✔ De verificat daca sterge corect indecsii dupa ce a mutat mai la stanga. Mai bine fac un for mai lung si sa fie corect @done(20.12.2024 22:46)
         ✔ De verificat daca primul fisier incepe de la indexul 0, daca nu muta la stanga @done(20.12.2024 22:46)
     Concrete:
-        ☐ De inchis fisierele la finalul loop ului
+        ✔ De inchis fisierele la finalul loop ului @started(26.12.2024 23:59) @done(27.12.2024 00:09) @lasted(10m39s)
+
+limactl shell x86_machine

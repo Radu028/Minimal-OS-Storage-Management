@@ -943,7 +943,7 @@ concrete:
         pushl %eax # st_size (file size)
         pushl %esi # file_id
         call add
-        popl %eax
+        popl %esi
         popl %eax
 
     concrete_skip_entry:
@@ -956,6 +956,18 @@ concrete:
         cmpl %ebx, %eax
         jg concrete_next_entry
 
+    movl $3, %ecx
+    movl %esi, %edx
+    concrete_close_files_loop:
+        # Syscall close
+        movl $6, %eax
+        movl %ecx, %ebx
+        int $0x80
+
+        incl %ecx
+        cmpl %ecx, %edx
+        jge concrete_close_files_loop
+        
         jmp concrete_end
 
 concrete_end_pop:
@@ -1106,7 +1118,7 @@ et_concrete:
     call concrete
     popl %ebx
 
-    call print_storage
+    # call print_storage
 
     jmp et_decl_O
 
