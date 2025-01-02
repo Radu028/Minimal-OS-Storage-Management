@@ -10,6 +10,6 @@ Bidimensional:
         ✔ De verificat daca primul fisier incepe de la indexul 0, daca nu muta la stanga @done(20.12.2024 22:46)
     Concrete:
         ✔ De inchis fisierele la finalul loop ului @started(26.12.2024 23:59) @done(27.12.2024 00:09) @lasted(10m39s)
-        ☐ De verificat ultima bulina din proiect
+        ✔ De verificat ultima bulina din proiect @started(02.01.2025 17:05) @done(02.01.2025 17:33) @lasted(28m7s)
 
 limactl shell x86_machine

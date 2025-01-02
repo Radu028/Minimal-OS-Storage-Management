@@ -911,7 +911,7 @@ concrete:
     concrete_get_file_dimension:
         pushl %ebx
 
-        # Syscall stat (for file dimension)
+        # Syscall stat (for file dimension in bytes)
         movl $108, %eax
         movl %edi, %ebx
         leal concrete_stat_buffer, %ecx
@@ -940,10 +940,39 @@ concrete:
         # Initialize storage
         leal storage, %edi
 
+        pushl %eax
+
+        pushl %esi
+        call get
+        popl %esi
+
+        popl %eax
+
+        movl find_file_end_index, %ecx
+        cmpl $0, %ecx
+        jne concrete_print_and_skip
+
         pushl %eax # st_size (file size)
         pushl %esi # file_id
         call add
         popl %esi
+        popl %eax
+
+        jmp concrete_skip_entry
+
+    concrete_print_and_skip:
+        pushl $0
+        pushl $0
+        pushl $0
+        pushl $0
+        pushl %esi
+        pushl $format_id_start_end_output
+        call printf
+        popl %eax
+        popl %esi
+        popl %eax
+        popl %eax
+        popl %eax
         popl %eax
 
     concrete_skip_entry:
