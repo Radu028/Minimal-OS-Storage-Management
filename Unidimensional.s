@@ -13,9 +13,6 @@
     format_id_start_end_output: .asciz "%d: (%d, %d)\n"
     format_start_end_output: .asciz "(%d, %d)\n"
 
-    format_test: .asciz "Test\n"
-    format_test_nr: .asciz "Test: %d\n"
-
 .text
 
 .global main
@@ -530,54 +527,3 @@ et_exit:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
-
-
-
-test_print:
-    pushl %eax
-    pushl %ebx
-    pushl %ecx
-    pushl %edx
-    pushl %esi
-    pushl %edi
-
-    pushl $format_test
-    call printf
-    popl %ebx
-
-    popl %edi
-    popl %esi
-    popl %edx
-    popl %ecx
-    popl %ebx
-    popl %eax
-
-    ret
-
-test_print_nr:
-    pushl %ebp
-    movl %esp, %ebp
-
-    pushl %eax
-    pushl %ebx
-    pushl %ecx
-    pushl %edx
-    pushl %esi
-    pushl %edi
-
-    movl 8(%ebp), %eax
-    pushl %eax
-    pushl $format_test_nr
-    call printf
-    popl %ebx
-    popl %ebx
-
-    popl %edi
-    popl %esi
-    popl %edx
-    popl %ecx
-    popl %ebx
-    popl %eax
-
-    popl %ebp
-    ret
