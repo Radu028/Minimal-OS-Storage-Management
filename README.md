@@ -61,8 +61,9 @@ This project implements storage management for a minimal operating system, writt
   - `(0, 0)` for skipped files due to descriptor conflicts or insufficient space.
 
 **Example Input:**
-```bash
-5 /path/to/directory
+```
+5
+/path/to/directory
 ```
 
 ## Technical Details
