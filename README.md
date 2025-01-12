@@ -101,13 +101,20 @@ Ensure you have GCC installed. Compile the code as follows:
  
 #### Example Input:
 ```
-5 /path/to/files
-1 2
-101 32
-102 64
-2 101
-3 101
-4
+5 *How many actions*
+5 *Concrete action id*
+/path/to/files *Concrete argument*
+1 *Add action id*
+2 *How many files to add*
+101 *First file descriptor*
+32 *First file dimension*
+102 *Second file descriptor*
+64 *Second file dimension*
+2 *Get action id*
+101 *File descriptor to get*
+3 *Delete action id*
+101 *File descriptor to delete*
+4 *Defragmentation action id*
 ```
 
 ---
